@@ -27,18 +27,21 @@ model_asr = AutoModel(
     model=ASR_MODEL,
     disable_pbar=True,
     disable_log=True,
+    disable_update=True,
 )
 # asr
 model_asr_streaming = AutoModel(
     model=ASR_MODEL_ONLINE,
     disable_pbar=True,
     disable_log=True,
+    disable_update=True,
 )
 # vad
 model_vad = AutoModel(
     model=VAD_MODEL,
     disable_pbar=True,
     disable_log=True,
+    disable_update=True,
     # chunk_size=60,
 )
 
@@ -47,6 +50,7 @@ model_punc = AutoModel(
     model=PUNC_MODEL,
     disable_pbar=True,
     disable_log=True,
+    disable_update=True,
 )
 
 
