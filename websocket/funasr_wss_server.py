@@ -14,10 +14,10 @@ print("model loading")
 from funasr import AutoModel
 
 
-ASR_MODEL="models/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-onnx"
+ASR_MODEL="models/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
 ASR_MODEL_ONLINE="models/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online-onnx"
 VAD_MODEL="models/speech_fsmn_vad_zh-cn-16k-common-onnx"
-PUNC_MODEL="models/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727-onnx"
+PUNC_MODEL="models/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727"
 ITN_MODEL="models/fst_itn_zh"
 LM_MODEL="models/speech_ngram_lm_zh-cn-ai-wesp-fst"
 
