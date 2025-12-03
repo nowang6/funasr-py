@@ -1,83 +1,365 @@
-# server.py
-import uuid
 import asyncio
-import multiprocessing as mp
-from fastapi import FastAPI, WebSocket
-from worker import worker_loop
+import json
+import logging
 import time
+from contextlib import asynccontextmanager
+from datetime import datetime
+from multiprocessing import Process, Queue, Manager
+from typing import Dict, Optional
+import numpy as np
 
-app = FastAPI()
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
+import uvicorn
 
-NUM_WORKERS = 8
-task_queue = mp.Queue()
-result_queue = mp.Queue()
+from src.worker import ASRWorker
+from src.logger import logger
+from src.session import SessionManager
+
+
+def worker_process(worker_id: int, task_queue: Queue, result_queue: Queue):
+    """工作进程入口函数"""
+    worker = ASRWorker(worker_id, task_queue, result_queue)
+    worker.run()
+
+# 全局变量
+NUM_WORKERS = 1
+task_queue = None
+result_queue = None
+session_manager = None
 workers = []
+stats_lock = None
 
-
-# 启动多进程 worker
-def start_workers():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理"""
+    # 启动时初始化
+    global task_queue, result_queue, session_manager, workers, stats_lock
+    
+    logger.info("=" * 50)
+    logger.info("启动实时语音转写服务")
+    logger.info(f"工作进程数量: {NUM_WORKERS}")
+    logger.info("=" * 50)
+    
+    # 创建队列
+    task_queue = Queue(maxsize=5000)
+    result_queue = Queue(maxsize=5000)
+    
+    # 创建会话管理器
+    manager = Manager()
+    stats_lock = manager.Lock()
+    session_manager = SessionManager()
+    
+    # 启动工作进程
     for i in range(NUM_WORKERS):
-        p = mp.Process(target=worker_loop, args=(task_queue, result_queue, i))
-        p.daemon = True
+        p = Process(target=worker_process, args=(i, task_queue, result_queue))
         p.start()
         workers.append(p)
-
-
-start_workers()
-
-
-@app.websocket("/tuling/ast/v3")
-async def websocket_api(ws: WebSocket):
-    await ws.accept()
+        logger.info(f"启动 Worker {i}")
     
-    last_log_time = 0
-    LOG_INTERVAL = 5.0  # 每 1 秒打印一次队列长度
-
-    # WebSocket→结果 ID 映射
-    pending = {}
-
-    async def result_collector():
-        """后台协程，收集 worker 推理结果并发回 websocket."""
-        loop = asyncio.get_event_loop()
-        while True:
-            req_id, output, worker_id = await loop.run_in_executor(
-                None, result_queue.get
-            )
-            websocket = pending.pop(req_id, None)
-            if websocket:
-                await websocket.send_json({
-                    "req_id": req_id,
-                    "worker_id": worker_id,
-                    "output": output,
-                })
-
-    # 启动异步结果监听器
-    asyncio.create_task(result_collector())
-
-    while True:
-        data = await ws.receive_text()
-
-        # 生成唯一请求 ID
-        req_id = str(uuid.uuid4())
-        pending[req_id] = ws
-
-        # 派发到 worker
-        task_queue.put((req_id, data))
-        
-        # 打印队大小
-        now = time.time()
-        if now - last_log_time > LOG_INTERVAL:
-            try:
-                print("Queue size:", task_queue.qsize())
-            except NotImplementedError:
-                print("Queue size: not supported on this platform")
-            last_log_time = now
-
-
-# 优雅退出
-@app.on_event("shutdown")
-def shutdown_event():
+    # 启动结果处理任务
+    asyncio.create_task(result_handler())
+    
+    # 启动统计日志任务
+    asyncio.create_task(stats_logger())
+    
+    yield  # 应用运行期间
+    
+    # 关闭时清理
+    logger.info("关闭服务，清理资源...")
+    
+    # 发送退出信号给所有工作进程
     for _ in range(NUM_WORKERS):
         task_queue.put(None)
+    
+    # 等待所有工作进程结束
     for p in workers:
-        p.join()
+        p.join(timeout=5)
+        if p.is_alive():
+            p.terminate()
+    
+    logger.info("所有工作进程已关闭")
+
+# ==================== FastAPI 应用 ====================
+app = FastAPI(title="实时语音转写服务", lifespan=lifespan)
+
+async def result_handler():
+    """处理推理结果并发送回客户端"""
+    logger.info("结果处理器启动")
+    
+    while True:
+        try:
+            # 非阻塞方式检查结果队列
+            if not result_queue.empty():
+                result = result_queue.get_nowait()
+                session_id = result['session_id']
+                task_type = result.get('task_type', '')
+                
+                # 获取对应的 WebSocket 连接
+                session = session_manager.get_session(session_id)
+                if session:
+                    try:
+                        if task_type == 'vad':
+                            # 处理 VAD 检测结果
+                            speech_start = result.get('speech_start', -1)
+                            speech_end = result.get('speech_end', -1)
+                            
+                            if speech_start != -1:
+                                # 检测到语音开始
+                                session['speech_start'] = True
+                                duration_ms = len(session['frames'][-1]) // 32 if session['frames'] else 0
+                                beg_bias = (session['vad_pre_idx'] - speech_start) // duration_ms if duration_ms > 0 else 0
+                                frames_pre = session['frames'][-beg_bias:] if beg_bias > 0 else []
+                                session['frames_asr'] = []
+                                session['frames_asr'].extend(frames_pre)
+                            
+                            if speech_end != -1:
+                                # 检测到语音结束
+                                session['speech_end_i'] = speech_end
+                        
+                        elif task_type in ['online', 'offline']:
+                            # 处理识别结果
+                            text = result.get('text', '')
+                            if len(text) > 0:
+                                mode = result.get('mode', 'online')
+                                if session['mode'] == '2pass':
+                                    mode = f"2pass-{mode}"
+                                
+                                await session['websocket'].send_json({
+                                    'type': 'result',
+                                    'mode': mode,
+                                    'text': text,
+                                    'is_final': result.get('is_final', False),
+                                    'wav_name': session['wav_name'],
+                                    'timestamp': result.get('timestamp', time.time())
+                                })
+                    except Exception as e:
+                        logger.error(f"发送结果失败: {session_id}, 错误: {e}")
+                        session_manager.remove_session(session_id)
+            else:
+                await asyncio.sleep(0.01)  # 避免CPU空转
+                
+        except Exception as e:
+            logger.error(f"结果处理器错误: {e}")
+            await asyncio.sleep(0.1)
+
+async def process_audio_data(session_id: str, audio_data: bytes, session: dict):
+    """处理音频数据，执行 VAD 检测和在线识别"""
+    # 将音频帧加入缓冲
+    session['frames'].append(audio_data)
+    duration_ms = len(audio_data) // 32  # 假设 16kHz, 16bit, mono
+    session['vad_pre_idx'] += duration_ms
+    
+    # 在线识别：累积音频帧
+    session['frames_asr_online'].append(audio_data)
+    session['status_dict_asr_online']['is_final'] = session['speech_end_i'] != -1
+    
+    # 更新 VAD chunk_size
+    if 'chunk_size' in session['status_dict_asr_online']:
+        session['status_dict_vad']['chunk_size'] = int(
+            session['status_dict_asr_online']['chunk_size'][1] * 60 / session['chunk_interval']
+        )
+    
+    # 当累积足够帧数或检测到语音结束时，进行在线识别
+    if (len(session['frames_asr_online']) % session['chunk_interval'] == 0 or 
+        session['status_dict_asr_online']['is_final']):
+        if session['mode'] in ['2pass', 'online']:
+            audio_in = b"".join(session['frames_asr_online'])
+            task_queue.put({
+                'session_id': session_id,
+                'audio_data': audio_in,
+                'type': 'online',
+                'status_dict': session['status_dict_asr_online'].copy()
+            })
+            session['first_pass_count'] += 1
+            session_manager.stats['total_requests'] += 1
+        session['frames_asr_online'] = []
+    
+    # VAD 检测
+    if session['speech_start']:
+        session['frames_asr'].append(audio_data)
+    
+    # 执行 VAD 检测 (这里简化处理，实际可以异步处理)
+    # 注意：在原始代码中 VAD 是实时处理的，这里我们也提交到任务队列
+    task_queue.put({
+        'session_id': session_id,
+        'audio_data': audio_data,
+        'type': 'vad',
+        'status_dict_vad': session['status_dict_vad'].copy()
+    })
+    
+    # 如果检测到语音结束，触发离线识别
+    if session['speech_end_i'] != -1 or not session['is_speaking']:
+        await handle_speech_end(session_id, session)
+
+async def handle_speech_end(session_id: str, session: dict):
+    """处理语音结束，执行离线精细识别"""
+    if session['mode'] in ['2pass', 'offline']:
+        if len(session['frames_asr']) > 0:
+            audio_in = b"".join(session['frames_asr'])
+            task_queue.put({
+                'session_id': session_id,
+                'audio_data': audio_in,
+                'type': 'offline',
+                'status_dict_asr': session['status_dict_asr'].copy(),
+                'status_dict_punc': session['status_dict_punc'].copy()
+            })
+            session['second_pass_count'] += 1
+            session_manager.stats['total_requests'] += 1
+    
+    # 重置状态
+    session['frames_asr'] = []
+    session['speech_start'] = False
+    session['frames_asr_online'] = []
+    session['status_dict_asr_online']['cache'] = {}
+    
+    if not session['is_speaking']:
+        session['vad_pre_idx'] = 0
+        session['frames'] = []
+        session['status_dict_vad']['cache'] = {}
+    else:
+        # 保留最近的一些帧
+        session['frames'] = session['frames'][-20:]
+    
+    session['speech_end_i'] = -1
+
+async def stats_logger():
+    """定期打印统计信息"""
+    while True:
+        await asyncio.sleep(10)  # 每10秒打印一次
+        
+        queue_size = task_queue.qsize()
+        result_queue_size = result_queue.qsize()
+        
+        logger.info("=" * 80)
+        logger.info(f"【系统统计】时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        logger.info(f"  活跃会话数: {session_manager.stats['active_sessions']}")
+        logger.info(f"  任务队列长度: {queue_size}")
+        logger.info(f"  结果队列长度: {result_queue_size}")
+        logger.info(f"  总请求数: {session_manager.stats['total_requests']}")
+        
+        # 检查资源竞争情况
+        if queue_size > NUM_WORKERS * 2:
+            logger.warning(f"⚠️  任务队列堆积严重 ({queue_size})，工作进程可能不足！")
+        
+        if session_manager.stats['active_sessions'] > NUM_WORKERS:
+            logger.warning(f"⚠️  活跃会话数 ({session_manager.stats['active_sessions']}) 超过工作进程数 ({NUM_WORKERS})，可能出现竞争！")
+        
+        logger.info("=" * 80)
+
+@app.websocket("/v1/asr")
+async def websocket_asr(websocket: WebSocket):
+    """WebSocket 实时语音转写接口"""
+    await websocket.accept()
+    session_id = f"session_{int(time.time() * 1000)}_{id(websocket)}"
+    
+    try:
+        # 创建会话
+        session_manager.create_session(session_id, websocket)
+        
+        # 发送欢迎消息
+        await websocket.send_json({
+            'type': 'connected',
+            'session_id': session_id,
+            'message': '连接成功，开始实时转写'
+        })
+        
+        while True:
+            # 接收客户端数据
+            data = await websocket.receive()
+            
+            # 检查是否收到断开消息
+            if data.get('type') == 'websocket.disconnect':
+                logger.info(f"收到客户端断开信号: {session_id}")
+                break
+            
+            session = session_manager.get_session(session_id)
+            if not session:
+                break
+            
+            if 'bytes' in data:
+                # 接收音频数据
+                audio_data = data['bytes']
+                await process_audio_data(session_id, audio_data, session)
+                        
+            elif 'text' in data:
+                # 接收文本命令
+                message = json.loads(data['text'])
+                
+                if message.get('type') == 'end_of_speech' or message.get('is_speaking') == False:
+                    # 语音结束
+                    session['is_speaking'] = False
+                    session['status_dict_asr_online']['is_final'] = True
+                    await handle_speech_end(session_id, session)
+                    
+                elif message.get('is_speaking') == True:
+                    # 语音开始
+                    session['is_speaking'] = True
+                    session['status_dict_asr_online']['is_final'] = False
+                    
+                elif message.get('type') == 'ping':
+                    # 心跳检测
+                    await websocket.send_json({
+                        'type': 'pong',
+                        'timestamp': time.time()
+                    })
+                
+                # 处理其他配置参数
+                if 'chunk_interval' in message:
+                    session['chunk_interval'] = message['chunk_interval']
+                if 'chunk_size' in message:
+                    chunk_size = message['chunk_size']
+                    if isinstance(chunk_size, str):
+                        chunk_size = chunk_size.split(",")
+                    session['chunk_size'] = [int(x) for x in chunk_size]
+                    session['status_dict_asr_online']['chunk_size'] = session['chunk_size']
+                if 'mode' in message:
+                    session['mode'] = message['mode']
+                if 'wav_name' in message:
+                    session['wav_name'] = message['wav_name']
+                if 'hotwords' in message:
+                    session['status_dict_asr']['hotword'] = message['hotwords']
+                    
+    except WebSocketDisconnect:
+        logger.info(f"客户端断开连接: {session_id}")
+    except RuntimeError as e:
+        # 捕获 "Cannot call 'receive' once a disconnect message has been received" 错误
+        if "disconnect message has been received" in str(e):
+            logger.info(f"客户端已断开连接: {session_id}")
+        else:
+            logger.error(f"WebSocket 运行时错误: {session_id}, {e}")
+    except Exception as e:
+        logger.error(f"WebSocket 错误: {session_id}, {e}")
+    finally:
+        session_manager.remove_session(session_id)
+
+@app.get("/health")
+async def health_check():
+    """健康检查接口"""
+    return {
+        'status': 'healthy',
+        'workers': NUM_WORKERS,
+        'active_sessions': session_manager.stats['active_sessions'],
+        'task_queue_size': task_queue.qsize(),
+        'result_queue_size': result_queue.qsize()
+    }
+
+@app.get("/stats")
+async def get_stats():
+    """获取统计信息"""
+    return {
+        'active_sessions': session_manager.stats['active_sessions'],
+        'total_requests': session_manager.stats['total_requests'],
+        'task_queue_size': task_queue.qsize(),
+        'result_queue_size': result_queue.qsize(),
+        'workers': NUM_WORKERS
+    }
+
+if __name__ == "__main__":
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        log_level="info",
+        workers=1  # 注意：只能用1个worker，因为我们使用了全局变量
+    )
