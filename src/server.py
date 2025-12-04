@@ -202,8 +202,15 @@ async def result_handler():
                                     }
                                 }
                                 
+                                # 检查WebSocket状态，确保连接仍然有效
+                                ws = session['websocket']
+                                if ws.client_state.name in ['DISCONNECTED', 'CLOSED']:
+                                    logger.warning(f"WebSocket已关闭，跳过发送: {session_id}")
+                                    session['send_failed'] = True
+                                    continue
+                                
                                 # 发送结果到客户端
-                                await session['websocket'].send_json(response)
+                                await ws.send_json(response)
                                 
                                 # 日志记录
                                 logger.info(f"发送识别结果: session={session_id}, "
@@ -243,13 +250,13 @@ async def process_audio_data(session_id: str, audio_data: bytes, session: dict):
     speech_end_i = session['speech_end_i']
     condition1 = frames_count % chunk_interval == 0
     condition2 = is_final
-    print(f"[DEBUG] session={session_id}, frames_count={frames_count}, "
+    logger.debug(f"[DEBUG] session={session_id}, frames_count={frames_count}, "
                  f"chunk_interval={chunk_interval}, condition1={condition1}, "
                  f"speech_end_i={speech_end_i}, is_final={is_final}, condition2={condition2}")
     
     # 当累积足够帧数或检测到语音结束时，进行在线识别
     if (condition1 or condition2):
-        print(f"[进入在线识别分支] session={session_id}, frames_count={frames_count}, "
+        logger.debug(f"[进入在线识别分支] session={session_id}, frames_count={frames_count}, "
                     f"condition1={condition1}, condition2={condition2}")
         audio_in = b"".join(session['frames_asr_online'])
         await asyncio.to_thread(
@@ -265,7 +272,7 @@ async def process_audio_data(session_id: str, audio_data: bytes, session: dict):
         session_manager.stats['total_requests'] += 1
         session['frames_asr_online'] = []
     else:
-        print(f"[未进入在线识别分支] session={session_id}, 需要满足任一条件: "
+        logger.debug(f"[未进入在线识别分支] session={session_id}, 需要满足任一条件: "
                      f"frames_count({frames_count}) % chunk_interval({chunk_interval}) == 0 或 is_final=True")
     
     # VAD 检测
