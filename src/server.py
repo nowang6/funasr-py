@@ -233,19 +233,18 @@ async def process_audio_data(session_id: str, audio_data: bytes, session: dict):
     # 当累积足够帧数或检测到语音结束时，进行在线识别
     if (len(session['frames_asr_online']) % session['chunk_interval'] == 0 or 
         session['status_dict_asr_online']['is_final']):
-        if session['mode'] in ['2pass', 'online']:
-            audio_in = b"".join(session['frames_asr_online'])
-            await asyncio.to_thread(
-                task_queue.put,
-                {
-                    'session_id': session_id,
-                    'audio_data': audio_in,
-                    'type': 'online',
-                    'status_dict': session['status_dict_asr_online'].copy()
-                }
-            )
-            session['first_pass_count'] += 1
-            session_manager.stats['total_requests'] += 1
+        audio_in = b"".join(session['frames_asr_online'])
+        await asyncio.to_thread(
+            task_queue.put,
+            {
+                'session_id': session_id,
+                'audio_data': audio_in,
+                'type': 'online',
+                'status_dict': session['status_dict_asr_online'].copy()
+            }
+        )
+        session['first_pass_count'] += 1
+        session_manager.stats['total_requests'] += 1
         session['frames_asr_online'] = []
     
     # VAD 检测
@@ -269,22 +268,22 @@ async def process_audio_data(session_id: str, audio_data: bytes, session: dict):
 
 async def handle_speech_end(session_id: str, session: dict):
     """处理语音结束，执行离线精细识别"""
-    if session['mode'] in ['2pass', 'offline']:
-        if len(session['frames_asr']) > 0:
-            audio_in = b"".join(session['frames_asr'])
-            await asyncio.to_thread(
-                task_queue.put,
-                {
-                    'session_id': session_id,
-                    'audio_data': audio_in,
-                    'type': 'offline',
-                    'status_dict_asr': session['status_dict_asr'].copy(),
-                    'status_dict_punc': session['status_dict_punc'].copy()
-                }
-            )
-            session['second_pass_count'] += 1
-            session_manager.stats['total_requests'] += 1
     
+    if len(session['frames_asr']) > 0:
+        audio_in = b"".join(session['frames_asr'])
+        await asyncio.to_thread(
+            task_queue.put,
+            {
+                'session_id': session_id,
+                'audio_data': audio_in,
+                'type': 'offline',
+                'status_dict_asr': session['status_dict_asr'].copy(),
+                'status_dict_punc': session['status_dict_punc'].copy()
+            }
+        )
+        session['second_pass_count'] += 1
+        session_manager.stats['total_requests'] += 1
+
     # 重置状态
     session['frames_asr'] = []
     session['speech_start'] = False

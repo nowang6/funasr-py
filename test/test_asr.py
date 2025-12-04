@@ -176,7 +176,13 @@ async def receive_result(ws):
 
 async def main():
     
-    async with websockets.connect(WS_URL) as ws:
+    # 禁用超时，方便调试服务器端（可以在断点处停留任意长时间）
+    async with websockets.connect(
+        WS_URL,
+        ping_timeout=None,     # 禁用 ping 超时检查
+        ping_interval=None,    # 禁用自动 ping（如果需要保持连接，可以设置为较大值如 300）
+        close_timeout=60       # 关闭超时时间：1分钟
+    ) as ws:
         send_task = asyncio.create_task(send_audio(ws, AUDIO_PATH))
         recv_task = asyncio.create_task(receive_result(ws))
         await asyncio.gather(send_task, recv_task)
