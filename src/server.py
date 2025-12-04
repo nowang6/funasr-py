@@ -469,8 +469,15 @@ async def websocket_asr(websocket: WebSocket):
     finally:
         # 清理会话资源
         try:
-            # 尝试关闭WebSocket连接
+            # 标记会话正在关闭，防止result_handler继续发送
             session = session_manager.get_session(session_id)
+            if session:
+                session['is_closing'] = True
+                
+            # 稍微延迟，让result_handler有机会看到is_closing标志
+            await asyncio.sleep(0.05)
+            
+            # 尝试关闭WebSocket连接
             if session and session.get('websocket'):
                 try:
                     await session['websocket'].close()

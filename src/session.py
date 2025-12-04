@@ -25,6 +25,7 @@ class SessionManager:
             'created_at': current_time,
             'last_activity': current_time,  # 最后活动时间
             'send_failed': False,  # 标记发送是否失败
+            'is_closing': False,  # 标记会话是否正在关闭
             'first_pass_count': 0,
             'second_pass_count': 0,
             'audio_buffer': b'',
