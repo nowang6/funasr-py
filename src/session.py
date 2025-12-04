@@ -19,6 +19,7 @@ class SessionManager:
     def create_session(self, session_id: str, websocket: WebSocket):
         """创建新会话"""
         current_time = time.time()
+        current_time_ms = int(current_time * 1000)
         self.sessions[session_id] = {
             'websocket': websocket,
             'created_at': current_time,
@@ -45,7 +46,10 @@ class SessionManager:
             'chunk_interval': 10,
             'chunk_size': [5, 10, 5],
             'mode': '2pass',
-            'wav_name': 'microphone'
+            'wav_name': 'microphone',
+            # 时间戳相关（用于响应消息）
+            'start_time_ms': current_time_ms,  # 会话开始时间（毫秒）
+            'last_bg': 0  # 上次结束时间，用于计算下次的bg
         }
         self.stats['active_sessions'] = len(self.sessions)
         logger.info(f"创建会话: {session_id}, 当前活跃会话数: {self.stats['active_sessions']}")

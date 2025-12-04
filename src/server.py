@@ -16,6 +16,7 @@ import uvicorn
 from src.worker import ASRWorker
 from src.logger import logger
 from src.session import SessionManager
+import base64
 
 
 def worker_process(worker_id: int, task_queue: Queue, result_queue: Queue):
@@ -125,21 +126,82 @@ async def result_handler():
                                 session['speech_end_i'] = speech_end
                         
                         elif task_type in ['online', 'offline']:
-                            # 处理识别结果
+                            # 处理识别结果（全双工2pass场景）
                             text = result.get('text', '')
                             if len(text) > 0:
-                                mode = result.get('mode', 'online')
-                                if session['mode'] == '2pass':
-                                    mode = f"2pass-{mode}"
+                                is_final = result.get('is_final', False)
                                 
-                                await session['websocket'].send_json({
-                                    'type': 'result',
-                                    'mode': mode,
-                                    'text': text,
-                                    'is_final': result.get('is_final', False),
-                                    'wav_name': session['wav_name'],
-                                    'timestamp': result.get('timestamp', time.time())
-                                })
+                                # 确定消息类型和状态：符合客户端test_asr.py的格式
+                                if session['mode'] == '2pass':
+                                    if task_type == 'online':
+                                        # 第一遍在线识别：中间状态(progressive)
+                                        msgtype = 'progressive'
+                                        status = 1  # 中间帧
+                                    elif task_type == 'offline':
+                                        # 第二遍离线识别：最终状态(sentence)
+                                        msgtype = 'sentence'
+                                        status = 2 if is_final else 1  # 最终结果时为尾帧
+                                else:
+                                    msgtype = 'sentence' if is_final else 'progressive'
+                                    status = 2 if is_final else 1
+                                
+                                # 将文本转换为 ws 格式（词语数组）
+                                # 简单处理：将整个文本作为一个词语单元
+                                ws_array = []
+                                if text:
+                                    # 将文本按标点符号或空格分割成词组
+                                    import re
+                                    # 按标点和空格分割，保留标点
+                                    segments = re.split(r'([，。！？、；：,.!?;:\s]+)', text)
+                                    for segment in segments:
+                                        if segment and segment.strip():
+                                            ws_array.append({
+                                                "cw": [{
+                                                    "w": segment,
+                                                    "rl": 0  # 角色ID，0表示无角色
+                                                }]
+                                            })
+                                    
+                                    # 如果没有分割结果，至少包含完整文本
+                                    if not ws_array:
+                                        ws_array.append({
+                                            "cw": [{
+                                                "w": text,
+                                                "rl": 0
+                                            }]
+                                        })
+                                
+                                # 计算时间戳（毫秒）
+                                current_time_ms = int(time.time() * 1000)
+                                bg = session.get('last_bg', 0)
+                                ed = current_time_ms - session.get('start_time_ms', current_time_ms)
+                                session['last_bg'] = ed  # 更新下次的开始时间
+                                
+                                # 构建符合客户端test_asr.py格式的响应消息
+                                response = {
+                                    "header": {
+                                        "traceId": session.get('trace_id', ''),
+                                        "appId": session.get('app_id', ''),
+                                        "bizId": session.get('biz_id', ''),
+                                        "status": status,  # 1=中间帧, 2=尾帧
+                                        "resIdList": []
+                                    },
+                                    "payload": {
+                                        "result": {
+                                            "bg": bg,  # 开始时间（毫秒）
+                                            "ed": ed,  # 结束时间（毫秒）
+                                            "msgtype": msgtype,  # progressive=中间状态(在线), sentence=最终状态(离线)
+                                            "ws": ws_array  # 词语数组
+                                        }
+                                    }
+                                }
+                                
+                                # 发送结果到客户端
+                                await session['websocket'].send_json(response)
+                                
+                                # 日志记录
+                                logger.debug(f"发送识别结果: session={session_id}, "
+                                           f"msgtype={msgtype}, text_len={len(text)}, status={status}")
                     except Exception as e:
                         logger.error(f"发送结果失败: {session_id}, 错误: {e}")
                         # 标记session为失败，但不在这里删除，让WebSocket handler的finally块处理
@@ -173,12 +235,15 @@ async def process_audio_data(session_id: str, audio_data: bytes, session: dict):
         session['status_dict_asr_online']['is_final']):
         if session['mode'] in ['2pass', 'online']:
             audio_in = b"".join(session['frames_asr_online'])
-            task_queue.put({
-                'session_id': session_id,
-                'audio_data': audio_in,
-                'type': 'online',
-                'status_dict': session['status_dict_asr_online'].copy()
-            })
+            await asyncio.to_thread(
+                task_queue.put,
+                {
+                    'session_id': session_id,
+                    'audio_data': audio_in,
+                    'type': 'online',
+                    'status_dict': session['status_dict_asr_online'].copy()
+                }
+            )
             session['first_pass_count'] += 1
             session_manager.stats['total_requests'] += 1
         session['frames_asr_online'] = []
@@ -187,14 +252,16 @@ async def process_audio_data(session_id: str, audio_data: bytes, session: dict):
     if session['speech_start']:
         session['frames_asr'].append(audio_data)
     
-    # 执行 VAD 检测 (这里简化处理，实际可以异步处理)
-    # 注意：在原始代码中 VAD 是实时处理的，这里我们也提交到任务队列
-    task_queue.put({
-        'session_id': session_id,
-        'audio_data': audio_data,
-        'type': 'vad',
-        'status_dict_vad': session['status_dict_vad'].copy()
-    })
+    # 执行 VAD 检测（异步提交到队列）
+    await asyncio.to_thread(
+        task_queue.put,
+        {
+            'session_id': session_id,
+            'audio_data': audio_data,
+            'type': 'vad',
+            'status_dict_vad': session['status_dict_vad'].copy()
+        }
+    )
     
     # 如果检测到语音结束，触发离线识别
     if session['speech_end_i'] != -1 or not session['is_speaking']:
@@ -205,13 +272,16 @@ async def handle_speech_end(session_id: str, session: dict):
     if session['mode'] in ['2pass', 'offline']:
         if len(session['frames_asr']) > 0:
             audio_in = b"".join(session['frames_asr'])
-            task_queue.put({
-                'session_id': session_id,
-                'audio_data': audio_in,
-                'type': 'offline',
-                'status_dict_asr': session['status_dict_asr'].copy(),
-                'status_dict_punc': session['status_dict_punc'].copy()
-            })
+            await asyncio.to_thread(
+                task_queue.put,
+                {
+                    'session_id': session_id,
+                    'audio_data': audio_in,
+                    'type': 'offline',
+                    'status_dict_asr': session['status_dict_asr'].copy(),
+                    'status_dict_punc': session['status_dict_punc'].copy()
+                }
+            )
             session['second_pass_count'] += 1
             session_manager.stats['total_requests'] += 1
     
@@ -258,10 +328,10 @@ async def stats_logger():
 async def session_cleanup_task():
     """定期清理超时的会话"""
     while True:
-        await asyncio.sleep(60)  # 每60秒检查一次
+        await asyncio.sleep(2*60*60)  # 每2小时检查一次
         try:
-            # 清理超时5分钟的会话
-            cleaned = session_manager.cleanup_timeout_sessions(timeout_seconds=300)
+            # 清理超时30分钟的会话
+            cleaned = session_manager.cleanup_timeout_sessions(timeout_seconds=30*60)
             if cleaned > 0:
                 logger.info(f"清理了 {cleaned} 个超时会话")
         except Exception as e:
@@ -314,9 +384,9 @@ async def websocket_asr(websocket: WebSocket):
                 continue
             
             # 解码base64音频数据
-            import base64
             try:
                 audio_data = base64.b64decode(audio_b64)
+                
             except Exception as e:
                 logger.error(f"音频数据base64解码失败: {session_id}, 错误: {e}")
                 continue
@@ -335,6 +405,9 @@ async def websocket_asr(websocket: WebSocket):
             session['trace_id'] = trace_id
             session['app_id'] = app_id
             session['biz_id'] = biz_id
+            
+            # 处理音频数据
+            await process_audio_data(session_id, audio_data, session)
             
             # 如果是尾帧，标记会话结束
             if status == 2:
