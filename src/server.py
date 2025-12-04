@@ -99,7 +99,7 @@ async def result_handler():
                 result = result_queue.get_nowait()
                 session_id = result['session_id']
                 task_type = result.get('task_type', '')
-                print(f"[结果处理] session={session_id}, task_type={task_type}, result_keys={list(result.keys())}")
+                logger.debug(f"[结果处理] session={session_id}, task_type={task_type}, result_keys={list(result.keys())}")
                 
                 # 获取对应的 WebSocket 连接
                 session = session_manager.get_session(session_id)
@@ -117,7 +117,7 @@ async def result_handler():
                             # 处理 VAD 检测结果（仅作为内部逻辑，不返回给客户端）
                             speech_start = result.get('speech_start', -1)
                             speech_end = result.get('speech_end', -1)
-                            print(f"[VAD结果] session={session_id}, speech_start={speech_start}, speech_end={speech_end}")
+                            logger.debug(f"[VAD结果] session={session_id}, speech_start={speech_start}, speech_end={speech_end}")
                             
                             if speech_start != -1:
                                 # 检测到语音开始：回溯预缓冲音频
@@ -127,19 +127,19 @@ async def result_handler():
                                 frames_pre = session['frames'][-beg_bias:] if beg_bias > 0 else []
                                 session['frames_asr'] = []
                                 session['frames_asr'].extend(frames_pre)
-                                print(f"[VAD检测到语音开始] session={session_id}, speech_start={speech_start}, "
+                                logger.debug(f"[VAD检测到语音开始] session={session_id}, speech_start={speech_start}, "
                                       f"beg_bias={beg_bias}, frames_asr_len={len(session['frames_asr'])}")
                             
                             if speech_end != -1:
                                 # 检测到语音结束：立即触发离线识别。
                                 # 这个speech_end是VAD检测到的语音结束时间，不是音频结束时间。   
-                                print(f"[VAD检测到语音结束] session={session_id}, speech_end={speech_end}, "
+                                logger.debug(f"[VAD检测到语音结束] session={session_id}, speech_end={speech_end}, "
                                       f"frames_asr_len={len(session['frames_asr'])}, frames_len={len(session['frames'])}")
                                 session['speech_end_i'] = speech_end
                                 
                                 # 如果frames_asr为空（异常情况），使用所有历史帧
                                 if len(session['frames_asr']) == 0 and len(session['frames']) > 0:
-                                    print(f"[VAD语音结束] frames_asr为空，使用所有历史帧, frames_len={len(session['frames'])}")
+                                    logger.debug(f"[VAD语音结束] frames_asr为空，使用所有历史帧, frames_len={len(session['frames'])}")
                                     session['frames_asr'] = session['frames'].copy()
                                     session['speech_start'] = True
                                 
@@ -149,12 +149,12 @@ async def result_handler():
                         else:
                             # 处理识别结果（全双工2pass场景：在线识别和离线识别）
                             text = result.get('text', '')
-                            print(f"[识别结果] session={session_id}, task_type={task_type}, text_len={len(text)}, text='{text}'")
+                            logger.debug(f"[识别结果] session={session_id}, task_type={task_type}, text_len={len(text)}, text='{text}'")
                             
                             # 如果是离线识别结果为空，也要通知等待线程
                             if len(text) == 0 and task_type == 'offline' and session.get('waiting_for_offline'):
                                 session['offline_completed'] = True
-                                print(f"[离线识别完成-空结果] session={session_id}, 已通知等待线程")
+                                logger.debug(f"[离线识别完成-空结果] session={session_id}, 已通知等待线程")
                             
                             if len(text) > 0:
                                 is_final = result.get('is_final', False)
@@ -172,7 +172,7 @@ async def result_handler():
                                     # 第二遍离线识别：最终状态(sentence)
                                     msgtype = 'sentence'
                                     status = 2 if is_final else 1  # 最终结果时为尾帧
-                                    print(f"[离线识别结果] session={session_id}, text_len={len(text)}, is_final={is_final}")
+                                    logger.debug(f"[离线识别结果] session={session_id}, text_len={len(text)}, is_final={is_final}")
                                 
                                 # 将文本转换为 ws 格式（词语数组）
                                 # 简单处理：将整个文本作为一个词语单元
@@ -242,7 +242,7 @@ async def result_handler():
                                 # 如果是离线识别结果且session正在等待，标记为完成
                                 if task_type == 'offline' and session.get('waiting_for_offline'):
                                     session['offline_completed'] = True
-                                    print(f"[离线识别完成] session={session_id}, 已通知等待线程")
+                                    logger.debug(f"[离线识别完成] session={session_id}, 已通知等待线程")
                     except Exception as e:
                         logger.error(f"发送结果失败: {session_id}, 错误: {e}")
                         # 标记session为失败，但不在这里删除，让WebSocket handler的finally块处理
@@ -316,7 +316,7 @@ async def handle_speech_end(session_id: str, session: dict):
     # 执行离线识别（2pass模式）
     if len(session['frames_asr']) > 0:
         audio_in = b"".join(session['frames_asr'])
-        print(f"[提交离线识别任务] session={session_id}, audio_len={len(audio_in)}, "
+        logger.debug(f"[提交离线识别任务] session={session_id}, audio_len={len(audio_in)}, "
               f"frames_asr_count={len(session['frames_asr'])}")
         await asyncio.to_thread(
             task_queue.put,
@@ -331,7 +331,7 @@ async def handle_speech_end(session_id: str, session: dict):
         session['second_pass_count'] += 1
         session_manager.stats['total_requests'] += 1
     else:
-        print(f"[离线识别跳过] session={session_id}, frames_asr为空")
+        logger.debug(f"[离线识别跳过] session={session_id}, frames_asr为空")
 
     # 重置状态，准备下一轮识别
     session['frames_asr'] = []
@@ -466,7 +466,7 @@ async def websocket_asr(websocket: WebSocket):
                 session['speech_end_i'] = -1
             elif status == 2:
                 # 尾帧：先处理最后一帧音频，然后触发离线识别
-                print(f"[尾帧] session={session_id}, 处理最后一帧并触发离线识别, frames_asr_len={len(session['frames_asr'])}")
+                logger.debug(f"[尾帧] session={session_id}, 处理最后一帧并触发离线识别, frames_asr_len={len(session['frames_asr'])}")
                 session['speech_end_i'] = 0  # 使用0表示尾帧触发的结束
                 # 处理最后一帧音频
                 await process_audio_data(session_id, audio_data, session)
@@ -474,29 +474,29 @@ async def websocket_asr(websocket: WebSocket):
                 # 触发离线识别
                 # 如果frames_asr为空（VAD没有检测到语音开始），使用所有历史帧
                 if len(session['frames_asr']) == 0 and len(session['frames']) > 0:
-                    print(f"[尾帧] frames_asr为空，使用所有历史帧进行离线识别, frames_len={len(session['frames'])}")
+                    logger.debug(f"[尾帧] frames_asr为空，使用所有历史帧进行离线识别, frames_len={len(session['frames'])}")
                     session['frames_asr'] = session['frames'].copy()
                     session['speech_start'] = True
                 
                 if len(session['frames_asr']) > 0:
-                    print(f"[尾帧触发离线识别] session={session_id}, frames_asr_len={len(session['frames_asr'])}")
+                    logger.debug(f"[尾帧触发离线识别] session={session_id}, frames_asr_len={len(session['frames_asr'])}")
                     session['waiting_for_offline'] = True
                     session['offline_completed'] = False
                     await handle_speech_end(session_id, session)
                     
                     # 等待离线识别完成（最多等待10秒）
-                    print(f"[尾帧] 等待离线识别完成...")
+                    logger.debug(f"[尾帧] 等待离线识别完成...")
                     max_wait_time = 10  # 最多等待10秒
                     wait_start = time.time()
                     while not session['offline_completed'] and (time.time() - wait_start) < max_wait_time:
                         await asyncio.sleep(0.1)
                     
                     if session['offline_completed']:
-                        print(f"[尾帧] 离线识别已完成，等待时间: {time.time() - wait_start:.2f}秒")
+                        logger.debug(f"[尾帧] 离线识别已完成，等待时间: {time.time() - wait_start:.2f}秒")
                     else:
-                        print(f"[尾帧] 等待超时，离线识别可能未完成")
+                        logger.debug(f"[尾帧] 等待超时，离线识别可能未完成")
                 else:
-                    print(f"[尾帧] 没有音频数据，跳过离线识别: {session_id}")
+                    logger.debug(f"[尾帧] 没有音频数据，跳过离线识别: {session_id}")
                 
                 session['is_final'] = True
                 break

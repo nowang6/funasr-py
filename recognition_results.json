@@ -1,0 +1,2396 @@
+[
+  {
+    "sequence": 1,
+    "timestamp": 30088.0649395,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 0,
+          "ed": 1734,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "幺零零急救中",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 2,
+    "timestamp": 30088.5794297,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 1734,
+          "ed": 2254,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "喂",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 3,
+    "timestamp": 30089.1135372,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 2254,
+          "ed": 2791,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "二零吗",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 4,
+    "timestamp": 30089.6485264,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 2791,
+          "ed": 3328,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "受伤了",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 5,
+    "timestamp": 30090.1428385,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 3328,
+          "ed": 3826,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "这儿后",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 6,
+    "timestamp": 30090.5655967,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 3826,
+          "ed": 4241,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "生了什么事啊",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 7,
+    "timestamp": 30091.0249641,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 4241,
+          "ed": 4706,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "发生了交",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 8,
+    "timestamp": 30091.5176778,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 4706,
+          "ed": 5194,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "哦有人",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 9,
+    "timestamp": 30092.0009103,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 5194,
+          "ed": 5681,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "啊一",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 10,
+    "timestamp": 30092.4764417,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 5681,
+          "ed": 6144,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "这个闯红",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 11,
+    "timestamp": 30092.9557212,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 6144,
+          "ed": 6638,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "入口与一辆小轿",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 12,
+    "timestamp": 30093.4213068,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 6638,
+          "ed": 7101,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "啊小",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 13,
+    "timestamp": 30093.9737614,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 7101,
+          "ed": 7629,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "就撞到一个骑自",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 14,
+    "timestamp": 30094.4768361,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 7629,
+          "ed": 8144,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "的人严",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 15,
+    "timestamp": 30095.01829,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 8144,
+          "ed": 8662,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "其",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 16,
+    "timestamp": 30095.5772833,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 8662,
+          "ed": 9251,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "这人躺在地上一",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 17,
+    "timestamp": 30096.1056451,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 9251,
+          "ed": 9787,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "不动旁",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 18,
+    "timestamp": 30096.6196557,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 9787,
+          "ed": 10295,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "都是雪",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 19,
+    "timestamp": 30097.1490355,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 10295,
+          "ed": 10811,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "男的移",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 20,
+    "timestamp": 30097.6524739,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 10811,
+          "ed": 11329,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "你们快点",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 21,
+    "timestamp": 30098.2246495,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 11329,
+          "ed": 11904,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "请问具",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 22,
+    "timestamp": 30098.7710044,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 11904,
+          "ed": 12450,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "点",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 23,
+    "timestamp": 30099.2984649,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 12450,
+          "ed": 12974,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "嗯这是北京",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 24,
+    "timestamp": 30099.866649,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 12974,
+          "ed": 13541,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "在北京",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 25,
+    "timestamp": 30100.4004156,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 13541,
+          "ed": 14079,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "北",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 26,
+    "timestamp": 30100.8410945,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 14079,
+          "ed": 14521,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "那什么地",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 27,
+    "timestamp": 30101.302604,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 14521,
+          "ed": 14986,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "北京路",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 28,
+    "timestamp": 30101.8390847,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 14986,
+          "ed": 15509,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "我么路路",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 29,
+    "timestamp": 30102.3039263,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 15509,
+          "ed": 15974,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "就是这条横",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 30,
+    "timestamp": 30102.8343371,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 15974,
+          "ed": 16512,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "我说不太",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 31,
+    "timestamp": 30103.4222201,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 16512,
+          "ed": 17089,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "这个地方我",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 32,
+    "timestamp": 30103.8775954,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 17089,
+          "ed": 17555,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "价",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 33,
+    "timestamp": 30104.4288724,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 17555,
+          "ed": 18109,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "这有这个喜",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 34,
+    "timestamp": 30104.9584552,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 18109,
+          "ed": 18635,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "酒店",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 35,
+    "timestamp": 30105.4682059,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 18635,
+          "ed": 19141,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "清楚点",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 36,
+    "timestamp": 30106.0063684,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 19141,
+          "ed": 19677,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "北京",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 37,
+    "timestamp": 30106.5158633,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 19677,
+          "ed": 20192,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "一个什么路路",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 38,
+    "timestamp": 30107.049123,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 20192,
+          "ed": 20729,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "有个呃右",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 39,
+    "timestamp": 30107.5927539,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 20729,
+          "ed": 21274,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "喜来顺酒",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 40,
+    "timestamp": 30108.1105382,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 21274,
+          "ed": 21787,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "请您报一下路",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 41,
+    "timestamp": 30108.6410858,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 21787,
+          "ed": 22315,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "好",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 42,
+    "timestamp": 30109.173496,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 22315,
+          "ed": 22850,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "一下",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 43,
+    "timestamp": 30109.7118477,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 22850,
+          "ed": 23386,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "就是北京路",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 44,
+    "timestamp": 30110.315079,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 23386,
+          "ed": 23986,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "是往南",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 45,
+    "timestamp": 30110.8049777,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 23986,
+          "ed": 24484,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "哦哦",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 46,
+    "timestamp": 30111.2962547,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 24484,
+          "ed": 24979,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "登北京",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 47,
+    "timestamp": 30111.8157807,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 24979,
+          "ed": 25480,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "广路口口",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 48,
+    "timestamp": 30112.3271232,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 25480,
+          "ed": 26008,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "北京路和广",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 49,
+    "timestamp": 30112.9099949,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 26008,
+          "ed": 26564,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "好",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 50,
+    "timestamp": 30113.429084,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 26564,
+          "ed": 27111,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "北京路和广东",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 51,
+    "timestamp": 30113.9262651,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 27111,
+          "ed": 27603,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "好的",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 52,
+    "timestamp": 30114.5145801,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 27603,
+          "ed": 28198,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "他派人过去",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 53,
+    "timestamp": 30115.0710504,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 28198,
+          "ed": 28748,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "你们快点过",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 54,
+    "timestamp": 30115.6336448,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 28748,
+          "ed": 29297,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "请问先生您贵",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 55,
+    "timestamp": 30116.2435422,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 29297,
+          "ed": 29909,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "呃不",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 56,
+    "timestamp": 30116.7474571,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 29909,
+          "ed": 30425,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "是谁就不重要",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 57,
+    "timestamp": 30117.2795155,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 30425,
+          "ed": 30951,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "快快过来再",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 58,
+    "timestamp": 30119.5307815,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 1,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 30951,
+          "ed": 33211,
+          "msgtype": "progressive",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "嗯",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "sequence": 59,
+    "timestamp": 30119.6820858,
+    "data": {
+      "header": {
+        "traceId": "71475dbf-942a-45d1-bb8a-427b81badf9f",
+        "appId": "123456",
+        "bizId": "test_bizid_001",
+        "status": 2,
+        "resIdList": []
+      },
+      "payload": {
+        "result": {
+          "bg": 33211,
+          "ed": 33353,
+          "msgtype": "sentence",
+          "ws": [
+            {
+              "cw": [
+                {
+                  "w": "幺二零急救中心喂",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "。",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "幺二零吗",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "？",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "有人受伤了",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "请你们快点过来",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "发生了什么事",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "？",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "发生了交通事故",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "。",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "有人受伤了",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "一辆小货车闯红灯",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "在路口与一辆小轿车相撞",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "小轿车又撞到一个骑自行车的人",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "严重吗",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "？",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "骑自行车的人躺在地上",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "一动也不动",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "旁边都是雪",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "是个男的",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "一动也不动",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "。",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "你们快点过来",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "请问具体地点呃",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "就是北京路和广京路到北京路靠近什么地方",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "？",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "北京路和什么路路口",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "就是这条横马路",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "我说不太清楚这个地方我看一下",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "旁边有个喜来顺酒店",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "请再说清楚点",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "。",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "北京路和一个什么路路口",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "有个右边有个喜来顺酒店",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "请您报一下路名",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "请您我看一下呃",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "就是北京路一直路南到哦",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "是广东路北京路和广东路口",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "北京路和广东路口吗",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "？",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "对",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "北京路和广东路口好的",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "我们马上派人过去",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "请们快点过来",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "请问先生",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "您贵姓喂",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "不要管我是谁",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "？",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "这不重要",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "，",
+                  "rl": 0
+                }
+              ]
+            },
+            {
+              "cw": [
+                {
+                  "w": "你们快点过来再见",
+                  "rl": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+]
