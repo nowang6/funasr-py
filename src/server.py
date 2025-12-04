@@ -279,7 +279,9 @@ async def process_audio_data(session_id: str, audio_data: bytes, session: dict):
     )
     
     # 如果检测到语音结束，触发离线识别
-    if session['speech_end_i'] != -1 or not session['is_speaking']:
+    if session['speech_end_i'] != -1:
+        logger.info(f"[触发离线识别] session={session_id}, speech_end_i={session['speech_end_i']}, "
+                    f"当前frames_asr_online长度={len(session['frames_asr_online'])}")
         await handle_speech_end(session_id, session)
 
 async def handle_speech_end(session_id: str, session: dict):
@@ -306,12 +308,14 @@ async def handle_speech_end(session_id: str, session: dict):
     session['frames_asr_online'] = []
     session['status_dict_asr_online']['cache'] = {}
     
-    if not session['is_speaking']:
+    # 如果是真正的语音结束（不是中间的VAD检测），清空所有缓存
+    if session['speech_end_i'] == 0:
+        # 尾帧触发的语音结束，完全清空
         session['vad_pre_idx'] = 0
         session['frames'] = []
         session['status_dict_vad']['cache'] = {}
     else:
-        # 保留最近的一些帧
+        # VAD检测到的语音结束，保留最近的一些帧用于下一句
         session['frames'] = session['frames'][-20:]
     
     session['speech_end_i'] = -1
@@ -420,6 +424,16 @@ async def websocket_asr(websocket: WebSocket):
             session['trace_id'] = trace_id
             session['app_id'] = app_id
             session['biz_id'] = biz_id
+            
+            # 根据status处理首帧和尾帧
+            if status == 0:
+                # 首帧：重置状态，开始新的识别
+                logger.info(f"[首帧] session={session_id}, 重置识别状态")
+                session['speech_end_i'] = -1
+            elif status == 2:
+                # 尾帧：标记为语音结束，触发最后的在线识别和离线识别
+                session['speech_end_i'] = 0  # 使用0表示尾帧触发的结束
+                logger.info(f"[尾帧] session={session_id}, 设置speech_end_i=0")
             
             # 处理音频数据
             await process_audio_data(session_id, audio_data, session)

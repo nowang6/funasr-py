@@ -28,7 +28,6 @@ class SessionManager:
             'first_pass_count': 0,
             'second_pass_count': 0,
             'audio_buffer': b'',
-            'is_speaking': False,
             # 音频帧缓冲
             'frames': [],
             'frames_asr': [],
