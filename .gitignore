@@ -11,3 +11,6 @@ wheels/
 
 # Model files
 models/
+
+# Environment variables
+.env

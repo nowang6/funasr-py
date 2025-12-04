@@ -18,9 +18,12 @@ class SessionManager:
         
     def create_session(self, session_id: str, websocket: WebSocket):
         """创建新会话"""
+        current_time = time.time()
         self.sessions[session_id] = {
             'websocket': websocket,
-            'created_at': time.time(),
+            'created_at': current_time,
+            'last_activity': current_time,  # 最后活动时间
+            'send_failed': False,  # 标记发送是否失败
             'first_pass_count': 0,
             'second_pass_count': 0,
             'audio_buffer': b'',
@@ -50,6 +53,13 @@ class SessionManager:
     def remove_session(self, session_id: str):
         """移除会话"""
         if session_id in self.sessions:
+            session = self.sessions[session_id]
+            # 清理会话中的大对象，释放内存
+            session['frames'] = []
+            session['frames_asr'] = []
+            session['frames_asr_online'] = []
+            session['audio_buffer'] = b''
+            
             del self.sessions[session_id]
             self.stats['active_sessions'] = len(self.sessions)
             logger.info(f"移除会话: {session_id}, 当前活跃会话数: {self.stats['active_sessions']}")
@@ -57,3 +67,28 @@ class SessionManager:
     def get_session(self, session_id: str) -> Optional[dict]:
         """获取会话"""
         return self.sessions.get(session_id)
+    
+    def cleanup_timeout_sessions(self, timeout_seconds: int = 300) -> int:
+        """
+        清理超时的会话
+        
+        Args:
+            timeout_seconds: 超时时间（秒），默认5分钟
+            
+        Returns:
+            清理的会话数量
+        """
+        current_time = time.time()
+        timeout_sessions = []
+        
+        for session_id, session in self.sessions.items():
+            # 检查最后活动时间是否超时
+            if current_time - session.get('last_activity', session['created_at']) > timeout_seconds:
+                timeout_sessions.append(session_id)
+        
+        # 移除超时会话
+        for session_id in timeout_sessions:
+            logger.warning(f"会话超时，自动清理: {session_id}")
+            self.remove_session(session_id)
+        
+        return len(timeout_sessions)

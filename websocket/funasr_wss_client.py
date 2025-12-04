@@ -18,9 +18,9 @@ logging.basicConfig(level=logging.ERROR)
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--host", type=str, default="localhost", required=False, help="host ip, localhost, 0.0.0.0"
+    "--host", type=str, default="1.95.195.66", required=False, help="host ip, localhost, 0.0.0.0"
 )
-parser.add_argument("--port", type=int, default=10095, required=False, help="grpc server port")
+parser.add_argument("--port", type=int, default=80, required=False, help="grpc server port")
 parser.add_argument("--chunk_size", type=str, default="5, 10, 5", help="chunk")
 parser.add_argument("--encoder_chunk_look_back", type=int, default=4, help="chunk")
 parser.add_argument("--decoder_chunk_look_back", type=int, default=0, help="chunk")
@@ -31,7 +31,7 @@ parser.add_argument(
     default="",
     help="hotword file path, one hotword perline (e.g.:阿里巴巴 20)",
 )
-parser.add_argument("--audio_in", type=str, default=None, help="audio_in")
+parser.add_argument("--audio_in", type=str, default="data/张三丰.wav", help="audio_in")
 parser.add_argument("--audio_fs", type=int, default=16000, help="audio_fs")
 parser.add_argument(
     "--send_without_sleep",

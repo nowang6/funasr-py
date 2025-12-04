@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import time
+import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
 from multiprocessing import Process, Queue, Manager
@@ -63,6 +64,9 @@ async def lifespan(app: FastAPI):
     # 启动统计日志任务
     asyncio.create_task(stats_logger())
     
+    # 启动会话清理任务
+    asyncio.create_task(session_cleanup_task())
+    
     yield  # 应用运行期间
     
     # 关闭时清理
@@ -98,6 +102,9 @@ async def result_handler():
                 # 获取对应的 WebSocket 连接
                 session = session_manager.get_session(session_id)
                 if session:
+                    # 更新最后活动时间
+                    session['last_activity'] = time.time()
+                    
                     try:
                         if task_type == 'vad':
                             # 处理 VAD 检测结果
@@ -135,7 +142,8 @@ async def result_handler():
                                 })
                     except Exception as e:
                         logger.error(f"发送结果失败: {session_id}, 错误: {e}")
-                        session_manager.remove_session(session_id)
+                        # 标记session为失败，但不在这里删除，让WebSocket handler的finally块处理
+                        session['send_failed'] = True
             else:
                 await asyncio.sleep(0.01)  # 避免CPU空转
                 
@@ -247,78 +255,92 @@ async def stats_logger():
         
         logger.info("=" * 80)
 
+async def session_cleanup_task():
+    """定期清理超时的会话"""
+    while True:
+        await asyncio.sleep(60)  # 每60秒检查一次
+        try:
+            # 清理超时5分钟的会话
+            cleaned = session_manager.cleanup_timeout_sessions(timeout_seconds=300)
+            if cleaned > 0:
+                logger.info(f"清理了 {cleaned} 个超时会话")
+        except Exception as e:
+            logger.error(f"会话清理任务错误: {e}")
+
 @app.websocket("/v1/asr")
 async def websocket_asr(websocket: WebSocket):
     """WebSocket 实时语音转写接口"""
     await websocket.accept()
-    session_id = f"session_{int(time.time() * 1000)}_{id(websocket)}"
+    session_id = f"session_{uuid.uuid4().hex}"
     
     try:
         # 创建会话
         session_manager.create_session(session_id, websocket)
         
-        # 发送欢迎消息
-        await websocket.send_json({
-            'type': 'connected',
-            'session_id': session_id,
-            'message': '连接成功，开始实时转写'
-        })
         
         while True:
             # 接收客户端数据
             data = await websocket.receive()
             
-            # 检查是否收到断开消息
-            if data.get('type') == 'websocket.disconnect':
-                logger.info(f"收到客户端断开信号: {session_id}")
-                break
+            # 客户端发送的是JSON格式的消息
+            msg_text = data.get('text')
+            if not msg_text:
+                logger.warning(f"收到非文本消息: {session_id}")
+                continue
             
+            try:
+                msg = json.loads(msg_text)
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON解析失败: {session_id}, 错误: {e}")
+                continue
+            
+            # 提取header信息
+            header = msg.get('header', {})
+            trace_id = header.get('traceId', '')
+            app_id = header.get('appId', '')
+            biz_id = header.get('bizId', '')
+            status = header.get('status', 0)  # 0=首帧, 1=中间帧, 2=尾帧
+            
+            # 提取parameter信息
+            parameter = msg.get('parameter', {})
+            
+            # 提取payload中的音频数据
+            payload = msg.get('payload', {})
+            audio_payload = payload.get('audio', {})
+            audio_b64 = audio_payload.get('audio', '')
+            
+            if not audio_b64:
+                logger.warning(f"收到空音频数据: {session_id}")
+                continue
+            
+            # 解码base64音频数据
+            import base64
+            try:
+                audio_data = base64.b64decode(audio_b64)
+            except Exception as e:
+                logger.error(f"音频数据base64解码失败: {session_id}, 错误: {e}")
+                continue
+            
+            logger.debug(f"收到音频数据: session={session_id}, trace_id={trace_id}, "
+                        f"status={status}, audio_size={len(audio_data)}")
+            
+            # 获取会话对象
             session = session_manager.get_session(session_id)
             if not session:
+                logger.error(f"会话不存在: {session_id}")
                 break
             
-            if 'bytes' in data:
-                # 接收音频数据
-                audio_data = data['bytes']
-                await process_audio_data(session_id, audio_data, session)
-                        
-            elif 'text' in data:
-                # 接收文本命令
-                message = json.loads(data['text'])
-                
-                if message.get('type') == 'end_of_speech' or message.get('is_speaking') == False:
-                    # 语音结束
-                    session['is_speaking'] = False
-                    session['status_dict_asr_online']['is_final'] = True
-                    await handle_speech_end(session_id, session)
-                    
-                elif message.get('is_speaking') == True:
-                    # 语音开始
-                    session['is_speaking'] = True
-                    session['status_dict_asr_online']['is_final'] = False
-                    
-                elif message.get('type') == 'ping':
-                    # 心跳检测
-                    await websocket.send_json({
-                        'type': 'pong',
-                        'timestamp': time.time()
-                    })
-                
-                # 处理其他配置参数
-                if 'chunk_interval' in message:
-                    session['chunk_interval'] = message['chunk_interval']
-                if 'chunk_size' in message:
-                    chunk_size = message['chunk_size']
-                    if isinstance(chunk_size, str):
-                        chunk_size = chunk_size.split(",")
-                    session['chunk_size'] = [int(x) for x in chunk_size]
-                    session['status_dict_asr_online']['chunk_size'] = session['chunk_size']
-                if 'mode' in message:
-                    session['mode'] = message['mode']
-                if 'wav_name' in message:
-                    session['wav_name'] = message['wav_name']
-                if 'hotwords' in message:
-                    session['status_dict_asr']['hotword'] = message['hotwords']
+            # 这里只接收数据，不进行推理处理
+            # 可以根据需要保存 trace_id, app_id, biz_id 等信息到session中
+            session['trace_id'] = trace_id
+            session['app_id'] = app_id
+            session['biz_id'] = biz_id
+            
+            # 如果是尾帧，标记会话结束
+            if status == 2:
+                logger.info(f"收到结束帧: {session_id}, trace_id={trace_id}")
+                session['is_final'] = True
+                break
                     
     except WebSocketDisconnect:
         logger.info(f"客户端断开连接: {session_id}")
@@ -331,7 +353,20 @@ async def websocket_asr(websocket: WebSocket):
     except Exception as e:
         logger.error(f"WebSocket 错误: {session_id}, {e}")
     finally:
-        session_manager.remove_session(session_id)
+        # 清理会话资源
+        try:
+            # 尝试关闭WebSocket连接
+            session = session_manager.get_session(session_id)
+            if session and session.get('websocket'):
+                try:
+                    await session['websocket'].close()
+                except Exception:
+                    pass  # WebSocket可能已经关闭
+        except Exception:
+            pass
+        finally:
+            # 移除会话
+            session_manager.remove_session(session_id)
 
 @app.get("/health")
 async def health_check():
