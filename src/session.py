@@ -26,6 +26,8 @@ class SessionManager:
             'last_activity': current_time,  # 最后活动时间
             'send_failed': False,  # 标记发送是否失败
             'is_closing': False,  # 标记会话是否正在关闭
+            'waiting_for_offline': False,  # 标记是否正在等待离线识别完成
+            'offline_completed': False,  # 标记离线识别是否已完成
             'first_pass_count': 0,
             'second_pass_count': 0,
             'audio_buffer': b'',

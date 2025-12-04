@@ -150,6 +150,12 @@ async def result_handler():
                             # 处理识别结果（全双工2pass场景：在线识别和离线识别）
                             text = result.get('text', '')
                             print(f"[识别结果] session={session_id}, task_type={task_type}, text_len={len(text)}, text='{text}'")
+                            
+                            # 如果是离线识别结果为空，也要通知等待线程
+                            if len(text) == 0 and task_type == 'offline' and session.get('waiting_for_offline'):
+                                session['offline_completed'] = True
+                                print(f"[离线识别完成-空结果] session={session_id}, 已通知等待线程")
+                            
                             if len(text) > 0:
                                 is_final = result.get('is_final', False)
                                 
@@ -232,6 +238,11 @@ async def result_handler():
                                 # 日志记录
                                 logger.info(f"发送识别结果: session={session_id}, "
                                            f"msgtype={msgtype}, text_len={len(text)}, status={status}")
+                                
+                                # 如果是离线识别结果且session正在等待，标记为完成
+                                if task_type == 'offline' and session.get('waiting_for_offline'):
+                                    session['offline_completed'] = True
+                                    print(f"[离线识别完成] session={session_id}, 已通知等待线程")
                     except Exception as e:
                         logger.error(f"发送结果失败: {session_id}, 错误: {e}")
                         # 标记session为失败，但不在这里删除，让WebSocket handler的finally块处理
@@ -469,7 +480,21 @@ async def websocket_asr(websocket: WebSocket):
                 
                 if len(session['frames_asr']) > 0:
                     print(f"[尾帧触发离线识别] session={session_id}, frames_asr_len={len(session['frames_asr'])}")
+                    session['waiting_for_offline'] = True
+                    session['offline_completed'] = False
                     await handle_speech_end(session_id, session)
+                    
+                    # 等待离线识别完成（最多等待10秒）
+                    print(f"[尾帧] 等待离线识别完成...")
+                    max_wait_time = 10  # 最多等待10秒
+                    wait_start = time.time()
+                    while not session['offline_completed'] and (time.time() - wait_start) < max_wait_time:
+                        await asyncio.sleep(0.1)
+                    
+                    if session['offline_completed']:
+                        print(f"[尾帧] 离线识别已完成，等待时间: {time.time() - wait_start:.2f}秒")
+                    else:
+                        print(f"[尾帧] 等待超时，离线识别可能未完成")
                 else:
                     print(f"[尾帧] 没有音频数据，跳过离线识别: {session_id}")
                 
