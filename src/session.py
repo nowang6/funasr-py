@@ -45,7 +45,6 @@ class SessionManager:
             # 配置参数
             'chunk_interval': 10,
             'chunk_size': [5, 10, 5],
-            'mode': '2pass',
             'wav_name': 'microphone',
             # 时间戳相关（用于响应消息）
             'start_time_ms': current_time_ms,  # 会话开始时间（毫秒）
