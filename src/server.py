@@ -238,13 +238,13 @@ async def process_audio_data(session_id: str, audio_data: bytes, session: dict):
     speech_end_i = session['speech_end_i']
     condition1 = frames_count % chunk_interval == 0
     condition2 = is_final
-    logger.info(f"[DEBUG] session={session_id}, frames_count={frames_count}, "
+    print(f"[DEBUG] session={session_id}, frames_count={frames_count}, "
                  f"chunk_interval={chunk_interval}, condition1={condition1}, "
                  f"speech_end_i={speech_end_i}, is_final={is_final}, condition2={condition2}")
     
     # 当累积足够帧数或检测到语音结束时，进行在线识别
     if (condition1 or condition2):
-        logger.info(f"[进入在线识别分支] session={session_id}, frames_count={frames_count}, "
+        print(f"[进入在线识别分支] session={session_id}, frames_count={frames_count}, "
                     f"condition1={condition1}, condition2={condition2}")
         audio_in = b"".join(session['frames_asr_online'])
         await asyncio.to_thread(
@@ -260,7 +260,7 @@ async def process_audio_data(session_id: str, audio_data: bytes, session: dict):
         session_manager.stats['total_requests'] += 1
         session['frames_asr_online'] = []
     else:
-        logger.info(f"[未进入在线识别分支] session={session_id}, 需要满足任一条件: "
+        print(f"[未进入在线识别分支] session={session_id}, 需要满足任一条件: "
                      f"frames_count({frames_count}) % chunk_interval({chunk_interval}) == 0 或 is_final=True")
     
     # VAD 检测
