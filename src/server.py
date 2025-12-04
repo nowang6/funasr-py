@@ -99,7 +99,7 @@ async def result_handler():
                 result = result_queue.get_nowait()
                 session_id = result['session_id']
                 task_type = result.get('task_type', '')
-                logger.debug(f"[结果处理] session={session_id}, task_type={task_type}, result_keys={list(result.keys())}")
+                print(f"[结果处理] session={session_id}, task_type={task_type}, result_keys={list(result.keys())}")
                 
                 # 获取对应的 WebSocket 连接
                 session = session_manager.get_session(session_id)
@@ -130,8 +130,9 @@ async def result_handler():
                                           f"beg_bias={beg_bias}, frames_asr_len={len(session['frames_asr'])}")
                             
                             if speech_end != -1:
-                                # 检测到语音结束：立即触发离线识别
-                                logger.info(f"[VAD检测到语音结束] session={session_id}, speech_end={speech_end}, "
+                                # 检测到语音结束：立即触发离线识别。
+                                # 这个speech_end是VAD检测到的语音结束时间，不是音频结束时间。   
+                                print(f"[VAD检测到语音结束] session={session_id}, speech_end={speech_end}, "
                                           f"frames_asr_len={len(session['frames_asr'])}")
                                 session['speech_end_i'] = speech_end
                                 
@@ -147,7 +148,7 @@ async def result_handler():
                         else:
                             # 处理识别结果（全双工2pass场景：在线识别和离线识别）
                             text = result.get('text', '')
-                            logger.debug(f"[识别结果] session={session_id}, task_type={task_type}, text_len={len(text)}")
+                            print(f"[识别结果] session={session_id}, task_type={task_type}, text_len={len(text)}")
                             if len(text) > 0:
                                 is_final = result.get('is_final', False)
                                 
@@ -164,7 +165,7 @@ async def result_handler():
                                     # 第二遍离线识别：最终状态(sentence)
                                     msgtype = 'sentence'
                                     status = 2 if is_final else 1  # 最终结果时为尾帧
-                                    logger.info(f"[离线识别结果] session={session_id}, text_len={len(text)}, is_final={is_final}")
+                                    print(f"[离线识别结果] session={session_id}, text_len={len(text)}, is_final={is_final}")
                                 
                                 # 将文本转换为 ws 格式（词语数组）
                                 # 简单处理：将整个文本作为一个词语单元
