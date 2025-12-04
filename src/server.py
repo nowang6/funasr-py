@@ -103,6 +103,11 @@ async def result_handler():
                 # 获取对应的 WebSocket 连接
                 session = session_manager.get_session(session_id)
                 if session:
+                    # 检查会话是否已标记为发送失败或正在关闭
+                    if session.get('send_failed') or session.get('is_closing'):
+                        # 跳过发送，避免在已关闭的WebSocket上操作
+                        continue
+                    
                     # 更新最后活动时间
                     session['last_activity'] = time.time()
                     

@@ -15,7 +15,7 @@ os.environ.pop('HTTPS_PROXY', None)
 
 
 WS_URL = "ws://1.95.195.66:8000/v1/asr"
-AUDIO_PATH = "data/120报警电话16k.wav" # 音频文件路径
+AUDIO_PATH = "data/张三丰.wav" # 音频文件路径
 FRAME_SIZE = 4096
 INTERVAL = 0.04
 OUTPUT_FILE = "recognition_results.json"  # 输出文件路径
