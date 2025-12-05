@@ -67,6 +67,28 @@ class ASRWorker:
             disable_log=True,
             disable_update=True,
         )
+        
+        # language model (FST format)
+        # 参考 C++ InitLm 函数，FST 语言模型不使用 AutoModel 加载
+        # 而是在推理时通过 lm_file 参数传入
+        try:
+            import os
+            lm_file = os.path.join(LM_MODEL, "TLG.fst")
+            lm_cfg_file = os.path.join(LM_MODEL, "config.yaml")
+            lex_file = os.path.join(LM_MODEL, "lexicon.txt")
+            
+            # 检查文件是否存在
+            if os.path.exists(lm_file):
+                self.model_lm = lm_file  # 保存 FST 文件路径
+                self.lm_cfg_file = lm_cfg_file if os.path.exists(lm_cfg_file) else None
+                self.lex_file = lex_file if os.path.exists(lex_file) else None
+                logger.info(f"Worker {self.worker_id}: Successfully load lm file {lm_file}")
+            else:
+                self.model_lm = None
+                logger.warning(f"Worker {self.worker_id}: LM file not found: {lm_file}")
+        except Exception as e:
+            logger.error(f"Worker {self.worker_id}: Error when load lm file: {e}")
+            self.model_lm = None
 
         
         logger.info(f"Worker {self.worker_id}: 模型加载完成")
@@ -98,14 +120,47 @@ class ASRWorker:
             "timestamp": time.time()
         }
     
-    def transcribe_offline(self, audio_data: bytes, session_id: str, status_dict_asr: dict, status_dict_punc: dict) -> dict:
-        """执行离线语音识别（第二遍精细识别 + 标点）"""
+    def transcribe_offline(self, audio_data: bytes, session_id: str, status_dict_asr: dict, status_dict_punc: dict, is_final: bool = True) -> dict:
+        """执行离线语音识别（第二遍精细识别 + 标点）
+        
+        参数:
+            audio_data: 音频数据
+            session_id: 会话ID
+            status_dict_asr: ASR状态字典
+            status_dict_punc: 标点状态字典
+            is_final: 是否是最后一帧（对应C++的input_finished）
+        """
         try:
             if len(audio_data) > 0:
                 # 执行离线 ASR
+                # 参考 C++ 代码: if (lm_ == nullptr) { GreedySearch } else { BeamSearch }
+                generate_kwargs = status_dict_asr.copy()
+                
+                # 根据是否有语言模型选择解码策略
+                if self.model_lm is not None:
+                    # 有语言模型 -> 使用 BeamSearch (对应C++ BeamSearch逻辑)
+                    generate_kwargs['beam_search'] = True
+                    generate_kwargs['beam_size'] = 10  # 默认束宽度
+                    generate_kwargs['lm_file'] = self.model_lm
+                    if hasattr(self, 'lm_cfg_file') and self.lm_cfg_file:
+                        generate_kwargs['lm_cfg_file'] = self.lm_cfg_file
+                    if hasattr(self, 'lex_file') and self.lex_file:
+                        generate_kwargs['lex_file'] = self.lex_file
+                    # 语言模型权重
+                    generate_kwargs['lm_weight'] = 0.15
+                    generate_kwargs['decoding_ctc_weight'] = 0.5
+                else:
+                    # 没有语言模型 -> 使用 GreedySearch (对应C++ GreedySearch逻辑)
+                    generate_kwargs['beam_search'] = False
+                
+                # 对应C++的 input_finished 标志
+                generate_kwargs['is_final'] = is_final
+                
+                # 对应C++代码中的timestamp处理(us_alphas, us_peaks)
+                # Python FunASR会在结果中返回timestamp信息
                 rec_result = self.model_asr.generate(
                     input=audio_data, 
-                    **status_dict_asr
+                    **generate_kwargs
                 )[0]
                 
                 # 添加标点符号
@@ -115,13 +170,20 @@ class ASRWorker:
                         **status_dict_punc
                     )[0]
                 
-                return {
+                # 返回结果，包含可能的timestamp信息
+                result_dict = {
                     "session_id": session_id,
                     "text": rec_result.get("text", ""),
                     "mode": "offline",
-                    "is_final": True,
+                    "is_final": is_final,
                     "timestamp": time.time()
                 }
+                
+                # 如果有timestamp信息(对应C++的us_alphas和us_peaks)
+                if "timestamp" in rec_result:
+                    result_dict["word_timestamps"] = rec_result["timestamp"]
+                
+                return result_dict
         except Exception as e:
             logger.error(f"Worker {self.worker_id}: 离线识别错误: {e}")
             
@@ -186,7 +248,9 @@ class ASRWorker:
                     # 离线精细识别
                     status_dict_asr = task.get('status_dict_asr', {})
                     status_dict_punc = task.get('status_dict_punc', {"cache": {}})
-                    result = self.transcribe_offline(audio_data, session_id, status_dict_asr, status_dict_punc)
+                    # 对应C++的input_finished参数
+                    is_final = task.get('is_final', True)
+                    result = self.transcribe_offline(audio_data, session_id, status_dict_asr, status_dict_punc, is_final)
                 elif task_type == 'vad':
                     # VAD 检测
                     status_dict_vad = task.get('status_dict_vad', {"cache": {}, "is_final": False})
