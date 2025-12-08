@@ -14,7 +14,7 @@ os.environ.pop('HTTP_PROXY', None)
 os.environ.pop('HTTPS_PROXY', None)
 
 
-WS_URL = "ws://1.95.195.66:8000/v1/asr"
+WS_URL = "ws://localhost:8000/v1/asr"
 AUDIO_PATH = "data/创建警单.wav" # 音频文件路径
 FRAME_SIZE = 4096
 INTERVAL = 0.04
