@@ -452,6 +452,10 @@ async def websocket_asr(websocket: WebSocket):
                 # 首帧：重置状态，开始新的识别
                 logger.info(f"[首帧] session={session_id}, 重置识别状态")
                 session['speech_end_i'] = -1
+                # 设置 VAD 状态：语音开始为 true，语音结束为 false
+                session['status_dict_vad']['speech_start'] = True
+                session['status_dict_vad']['speech_end'] = False
+                
                 await process_audio_data(session_id, audio_data, session)
             elif status == 1:
                 # 中间帧

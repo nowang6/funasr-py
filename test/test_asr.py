@@ -23,8 +23,6 @@ OUTPUT_FILE = "recognition_results.json"  # 输出文件路径
 have_msg = False
 
 
-
-
 def gen_trace_id():
     return str(uuid.uuid4())
 
@@ -40,14 +38,8 @@ async def send_audio(ws, audio_path):
             if not data:
                 break
             
-            # 检查是否为最后一块数据
-            current_pos = f.tell()
-            f.seek(0, 2)  # 移动到文件末尾
-            file_size = f.tell()
-            f.seek(current_pos)  # 恢复到当前位置
-            
-            # 如果当前位置加上当前数据块大小达到或超过文件大小，说明这是最后一块数据
-            is_last_chunk = current_pos + len(data) >= file_size
+            # 如果读取的数据小于请求的大小，说明这是最后一块数据
+            is_last_chunk = len(data) < FRAME_SIZE
 
             if is_last_chunk:
                 status = 2  # 设置为结束状态
@@ -181,7 +173,7 @@ async def main():
         WS_URL,
         ping_timeout=None,     # 禁用 ping 超时检查
         ping_interval=None,    # 禁用自动 ping（如果需要保持连接，可以设置为较大值如 300）
-        close_timeout=60       # 关闭超时时间：1分钟
+        close_timeout=120       # 关闭超时时间：1分钟
     ) as ws:
         send_task = asyncio.create_task(send_audio(ws, AUDIO_PATH))
         recv_task = asyncio.create_task(receive_result(ws))

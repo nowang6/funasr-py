@@ -26,8 +26,13 @@ WS_URL = "wss://182.150.59.81:31843/ai/agent/v1/ast"  # WebSocket服务地址
 token = os.getenv("TOKEN")  # 从环境变量读取认证令牌
 if not token:
     raise ValueError("TOKEN 未设置，请在 .env 文件中配置 TOKEN")
-AUDIO_PATH = "data/张三丰.wav"  # 音频文件路径
+AUDIO_PATH = "data/120报警电话16k.wav"  # 音频文件路径
 FRAME_SIZE = 4096  # 音频帧大小（字节）
+# 时长(秒) = FRAME_SIZE / (采样率 × 位深度/8)
+# 时长(秒) = 4096 / (16000 × 16/8)
+# 时长(秒) = 4096 / (16000 × 2)
+# 时长(秒) = 4096 / 32000
+# 时长(秒) = 0.128 秒 = 128 毫秒
 INTERVAL = 0.04  # 发送间隔（秒）
 OUTPUT_FILE = "recognition_results.json"  # 输出文件路径
 
@@ -51,17 +56,9 @@ async def send_audio(ws, audio_path):
     with open(audio_path, "rb") as f:
         while True:
             data = f.read(FRAME_SIZE)  # 读取音频数据块
-            if not data:
-                break
             
-            # 检查是否为最后一块数据
-            current_pos = f.tell()  # 获取当前位置
-            f.seek(0, 2)  # 移动到文件末尾
-            file_size = f.tell()  # 获取文件总大小
-            f.seek(current_pos)  # 恢复到当前位置
-            
-            # 如果当前位置加上当前数据块大小达到或超过文件大小，说明这是最后一块数据
-            is_last_chunk = current_pos + len(data) >= file_size
+            # 如果读取的数据小于请求的大小，说明这是最后一块数据
+            is_last_chunk = len(data) < FRAME_SIZE
 
             if is_last_chunk:
                 status = 2  # 设置为结束状态
