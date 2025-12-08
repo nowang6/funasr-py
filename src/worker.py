@@ -134,8 +134,6 @@ class ASRWorker:
             status_dict_asr: ASR状态字典
             status_dict_punc: 标点状态字典
             is_final: 是否是最后一帧（对应C++的input_finished）
-        
-        返回结果中包含更新后的status_dict_asr和status_dict_punc字段
         """
         try:
             if len(audio_data) > 0:
@@ -183,9 +181,7 @@ class ASRWorker:
                     "text": rec_result.get("text", ""),
                     "mode": "offline",
                     "is_final": is_final,
-                    "timestamp": time.time(),
-                    "status_dict_asr": status_dict_asr,  # 返回更新后的status_dict
-                    "status_dict_punc": status_dict_punc  # 返回更新后的status_dict
+                    "timestamp": time.time()
                 }
                 
                 # 如果有timestamp信息(对应C++的us_alphas和us_peaks)
@@ -263,6 +259,7 @@ class ASRWorker:
                     # 离线精细识别
                     status_dict_asr = task.get('status_dict_asr', {})
                     status_dict_punc = task.get('status_dict_punc', {"cache": {}})
+                    # 对应C++的input_finished参数
                     is_final = task.get('is_final', True)
                     result = self.transcribe_offline(audio_data, session_id, status_dict_asr, status_dict_punc, is_final)
                 elif task_type == 'vad':
