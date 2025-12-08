@@ -93,192 +93,198 @@ async def result_handler():
     logger.info("结果处理器启动")
     
     while True:
-        try:
-            # 非阻塞方式检查结果队列
-            if not result_queue.empty():
-                result = result_queue.get_nowait()
-                session_id = result['session_id']
-                task_type = result.get('task_type', '')
-                logger.debug(f"[结果处理] session={session_id}, task_type={task_type}, result_keys={list(result.keys())}")
+        # 非阻塞方式检查结果队列
+        if not result_queue.empty():
+            result = result_queue.get_nowait()
+            session_id = result['session_id']
+            task_type = result.get('task_type', '')
+            logger.debug(f"[结果处理] session={session_id}, task_type={task_type}, result_keys={list(result.keys())}")
+            
+            # 获取对应的 WebSocket 连接
+            session = session_manager.get_session(session_id)
+            if session:
+                # 更新最后活动时间
+                session['last_activity'] = time.time()
                 
-                # 获取对应的 WebSocket 连接
-                session = session_manager.get_session(session_id)
-                if session:
-                    # 检查会话是否已标记为发送失败或正在关闭
-                    if session.get('send_failed') or session.get('is_closing'):
-                        # 跳过发送，避免在已关闭的WebSocket上操作
-                        continue
-                    
-                    # 更新最后活动时间
-                    session['last_activity'] = time.time()
-                    
-                    try:
-                        if task_type == 'vad':
-                            # 处理 VAD 检测结果（仅作为内部逻辑，不返回给客户端）
-                            speech_start = result.get('speech_start', -1)
-                            speech_end = result.get('speech_end', -1)
-                            logger.debug(f"[VAD结果] session={session_id}, speech_start={speech_start}, speech_end={speech_end}")
-                            
-                            if speech_start != -1:
-                                # 检测到语音开始：回溯预缓冲音频
-                                session['speech_start'] = True
-                                duration_ms = len(session['frames'][-1]) // 32 if session['frames'] else 0
-                                beg_bias = (session['vad_pre_idx'] - speech_start) // duration_ms if duration_ms > 0 else 0
-                                frames_pre = session['frames'][-beg_bias:] if beg_bias > 0 else []
-                                session['frames_asr'] = []
-                                session['frames_asr'].extend(frames_pre)
-                                logger.debug(f"[VAD检测到语音开始] session={session_id}, speech_start={speech_start}, "
-                                      f"beg_bias={beg_bias}, frames_asr_len={len(session['frames_asr'])}")
-                            
-                            if speech_end != -1:
-                                # 检测到语音结束：立即触发离线识别。
-                                # 这个speech_end是VAD检测到的语音结束时间，不是音频结束时间。   
-                                logger.debug(f"[VAD检测到语音结束] session={session_id}, speech_end={speech_end}, "
-                                      f"frames_asr_len={len(session['frames_asr'])}, frames_len={len(session['frames'])}")
-                                session['speech_end_i'] = speech_end
-                                
-                                # 如果frames_asr为空（异常情况），使用所有历史帧
-                                if len(session['frames_asr']) == 0 and len(session['frames']) > 0:
-                                    logger.debug(f"[VAD语音结束] frames_asr为空，使用所有历史帧, frames_len={len(session['frames'])}")
-                                    session['frames_asr'] = session['frames'].copy()
-                                    session['speech_start'] = True
-                                
-                                # 立即触发离线识别，不等待下一帧
-                                await handle_speech_end(session_id, session)
+                try:
+                    if task_type == 'vad':
+                        # 处理 VAD 检测结果（仅作为内部逻辑，不返回给客户端）
+                        speech_start = result.get('speech_start', -1)
+                        speech_end = result.get('speech_end', -1)
+                        logger.debug(f"[VAD结果] session={session_id}, speech_start={speech_start}, speech_end={speech_end}")
                         
-                        else:
-                            # 处理识别结果（全双工2pass场景：在线识别和离线识别）
-                            text = result.get('text', '')
-                            logger.debug(f"[识别结果] session={session_id}, task_type={task_type}, text_len={len(text)}, text='{text}'")
+                        # 更新VAD的status_dict（保持流式状态）
+                        if 'status_dict_vad' in result:
+                            session['status_dict_vad'] = result['status_dict_vad']
+                            logger.debug(f"[VAD状态更新] session={session_id}, cache_keys={list(session['status_dict_vad'].get('cache', {}).keys())}")
+                        
+                        if speech_start != -1:
+                            # 检测到语音开始：回溯预缓冲音频
+                            session['speech_start'] = True
+                            duration_ms = len(session['frames'][-1]) // 32 if session['frames'] else 0
+                            beg_bias = (session['vad_pre_idx'] - speech_start) // duration_ms if duration_ms > 0 else 0
+                            frames_pre = session['frames'][-beg_bias:] if beg_bias > 0 else []
+                            session['frames_asr'] = []
+                            session['frames_asr'].extend(frames_pre)
+                            logger.debug(f"[VAD检测到语音开始] session={session_id}, speech_start={speech_start}, "
+                                    f"beg_bias={beg_bias}, frames_asr_len={len(session['frames_asr'])}")
+                        
+                        if speech_end != -1:
+                            # 检测到语音结束：立即触发离线识别。
+                            # 这个speech_end是VAD检测到的语音结束时间，不是音频结束时间。   
+                            logger.debug(f"[VAD检测到语音结束] session={session_id}, speech_end={speech_end}, "
+                                    f"frames_asr_len={len(session['frames_asr'])}, frames_len={len(session['frames'])}")
+                            session['speech_end_i'] = speech_end
                             
-                            # 如果是离线识别结果为空，也要通知等待线程
-                            if len(text) == 0 and task_type == 'offline' and session.get('waiting_for_offline'):
-                                session['offline_completed'] = True
-                                logger.debug(f"[离线识别完成-空结果] session={session_id}, 已通知等待线程")
+                            # 如果frames_asr为空（异常情况），使用所有历史帧
+                            if len(session['frames_asr']) == 0 and len(session['frames']) > 0:
+                                logger.debug(f"[VAD语音结束] frames_asr为空，使用所有历史帧, frames_len={len(session['frames'])}")
+                                session['frames_asr'] = session['frames'].copy()
+                                session['speech_start'] = True
                             
-                            if len(text) > 0:
-                                is_final = result.get('is_final', False)
-                                
-                                # 确定消息类型和状态：符合客户端test_asr.py的格式
-                                # 2pass模式：在线识别返回progressive，离线识别返回sentence
-                                msgtype = 'progressive'  # 默认值
-                                status = 1  # 默认中间帧
-                                
-                                if task_type == 'online':
-                                    # 第一遍在线识别：中间状态(progressive)
-                                    msgtype = 'progressive'
-                                    status = 1  # 中间帧
-                                elif task_type == 'offline':
-                                    # 第二遍离线识别：最终状态(sentence)
-                                    msgtype = 'sentence'
-                                    status = 2 if is_final else 1  # 最终结果时为尾帧
-                                    logger.debug(f"[离线识别结果] session={session_id}, text_len={len(text)}, is_final={is_final}")
-                                
-                                # 将文本转换为 ws 格式（词语数组）
-                                # 简单处理：将整个文本作为一个词语单元
-                                ws_array = []
-                                if text:
-                                    # 将文本按标点符号或空格分割成词组
-                                    import re
-                                    # 按标点和空格分割，保留标点
-                                    segments = re.split(r'([，。！？、；：,.!?;:\s]+)', text)
-                                    for segment in segments:
-                                        if segment and segment.strip():
-                                            ws_array.append({
-                                                "cw": [{
-                                                    "w": segment,
-                                                    "rl": 0  # 角色ID，0表示无角色
-                                                }]
-                                            })
-                                    
-                                    # 如果没有分割结果，至少包含完整文本
-                                    if not ws_array:
+                            # 立即触发离线识别，不等待下一帧
+                            await handle_speech_end(session_id, session)
+                    # task_type == online
+                    else:
+                        # 处理识别结果（全双工2pass场景：在线识别和离线识别）
+                        text = result.get('text', '')
+                        logger.debug(f"[识别结果] session={session_id}, task_type={task_type}, text_len={len(text)}, text='{text}'")
+                        
+                        # 更新模型的status_dict（保持流式状态）
+                        if task_type == 'online' and 'status_dict_asr_online' in result:
+                            session['status_dict_asr_online'] = result['status_dict_asr_online']
+                            logger.debug(f"[在线ASR状态更新] session={session_id}, cache_keys={list(session['status_dict_asr_online'].get('cache', {}).keys())}")
+                        elif task_type == 'offline':
+                            if 'status_dict_asr' in result:
+                                session['status_dict_asr'] = result['status_dict_asr']
+                                logger.debug(f"[离线ASR状态更新] session={session_id}")
+                            if 'status_dict_punc' in result:
+                                session['status_dict_punc'] = result['status_dict_punc']
+                                logger.debug(f"[标点状态更新] session={session_id}")
+                        
+                        # 如果是离线识别结果为空，也要通知等待线程
+                        if len(text) == 0 and task_type == 'offline' and session.get('waiting_for_offline'):
+                            session['offline_completed'] = True
+                            logger.debug(f"[离线识别完成-空结果] session={session_id}, 已通知等待线程")
+                        
+                        if len(text) > 0:
+                            is_final = result.get('is_final', False)
+                            
+                            # 确定消息类型和状态：符合客户端test_asr.py的格式
+                            # 2pass模式：在线识别返回progressive，离线识别返回sentence
+                            msgtype = 'progressive'  # 默认值
+                            status = 1  # 默认中间帧
+                            
+                            if task_type == 'online':
+                                # 第一遍在线识别：中间状态(progressive)
+                                msgtype = 'progressive'
+                                status = 1  # 中间帧
+                            elif task_type == 'offline':
+                                # 第二遍离线识别：最终状态(sentence)
+                                msgtype = 'sentence'
+                                status = 2 if is_final else 1  # 最终结果时为尾帧
+                                logger.debug(f"[离线识别结果] session={session_id}, text_len={len(text)}, is_final={is_final}")
+                            
+                            # 将文本转换为 ws 格式（词语数组）
+                            # 简单处理：将整个文本作为一个词语单元
+                            ws_array = []
+                            if text:
+                                # 将文本按标点符号或空格分割成词组
+                                import re
+                                # 按标点和空格分割，保留标点
+                                segments = re.split(r'([，。！？、；：,.!?;:\s]+)', text)
+                                for segment in segments:
+                                    if segment and segment.strip():
                                         ws_array.append({
                                             "cw": [{
-                                                "w": text,
-                                                "rl": 0
+                                                "w": segment,
+                                                "rl": 0  # 角色ID，0表示无角色
                                             }]
                                         })
                                 
-                                # 计算时间戳（毫秒）
-                                current_time_ms = int(time.time() * 1000)
-                                bg = session.get('last_bg', 0)
-                                ed = current_time_ms - session.get('start_time_ms', current_time_ms)
-                                session['last_bg'] = ed  # 更新下次的开始时间
-                                
-                                # 构建符合客户端test_asr.py格式的响应消息
-                                response = {
-                                    "header": {
-                                        "traceId": session.get('trace_id', ''),
-                                        "appId": session.get('app_id', ''),
-                                        "bizId": session.get('biz_id', ''),
-                                        "status": status,  # 1=中间帧, 2=尾帧
-                                        "resIdList": []
-                                    },
-                                    "payload": {
-                                        "result": {
-                                            "bg": bg,  # 开始时间（毫秒）
-                                            "ed": ed,  # 结束时间（毫秒）
-                                            "msgtype": msgtype,  # progressive=中间状态(在线), sentence=最终状态(离线)
-                                            "ws": ws_array  # 词语数组
-                                        }
+                                # 如果没有分割结果，至少包含完整文本
+                                if not ws_array:
+                                    ws_array.append({
+                                        "cw": [{
+                                            "w": text,
+                                            "rl": 0
+                                        }]
+                                    })
+                            
+                            # 计算时间戳（毫秒）
+                            current_time_ms = int(time.time() * 1000)
+                            bg = session.get('last_bg', 0)
+                            ed = current_time_ms - session.get('start_time_ms', current_time_ms)
+                            session['last_bg'] = ed  # 更新下次的开始时间
+                            
+                            # 构建符合客户端test_asr.py格式的响应消息
+                            response = {
+                                "header": {
+                                    "traceId": session.get('trace_id', ''),
+                                    "appId": session.get('app_id', ''),
+                                    "bizId": session.get('biz_id', ''),
+                                    "status": status,  # 1=中间帧, 2=尾帧
+                                    "resIdList": []
+                                },
+                                "payload": {
+                                    "result": {
+                                        "bg": bg,  # 开始时间（毫秒）
+                                        "ed": ed,  # 结束时间（毫秒）
+                                        "msgtype": msgtype,  # progressive=中间状态(在线), sentence=最终状态(离线)
+                                        "ws": ws_array  # 词语数组
                                     }
                                 }
-                                
-                                # 检查WebSocket状态，确保连接仍然有效
-                                ws = session['websocket']
-                                if ws.client_state.name in ['DISCONNECTED', 'CLOSED']:
-                                    logger.warning(f"WebSocket已关闭，跳过发送: {session_id}")
-                                    session['send_failed'] = True
-                                    continue
-                                
-                                # 发送结果到客户端
-                                await ws.send_json(response)
-                                
-                                # 日志记录
-                                logger.info(f"发送识别结果: session={session_id}, "
-                                           f"msgtype={msgtype}, text_len={len(text)}, status={status}")
-                                
-                                # 如果是离线识别结果且session正在等待，标记为完成
-                                if task_type == 'offline' and session.get('waiting_for_offline'):
-                                    session['offline_completed'] = True
-                                    logger.debug(f"[离线识别完成] session={session_id}, 已通知等待线程")
-                    except Exception as e:
-                        logger.error(f"发送结果失败: {session_id}, 错误: {e}")
-                        # 标记session为失败，但不在这里删除，让WebSocket handler的finally块处理
-                        session['send_failed'] = True
-            else:
-                await asyncio.sleep(0.01)  # 避免CPU空转
-                
-        except Exception as e:
-            logger.error(f"结果处理器错误: {e}")
-            await asyncio.sleep(0.1)
+                            }
+                            
+                            # 检查WebSocket状态，确保连接仍然有效
+                            ws = session['websocket']
+                            if ws.client_state.name in ['DISCONNECTED', 'CLOSED']:
+                                logger.warning(f"WebSocket已关闭，跳过发送: {session_id}")
+                                session['send_failed'] = True
+                                continue
+                            
+                            # 发送结果到客户端
+                            await ws.send_json(response)
+                            
+                            # 日志记录
+                            logger.info(f"发送识别结果: session={session_id}, "
+                                        f"msgtype={msgtype}, text_len={len(text)}, status={status}")
+                            
+                            # 如果是离线识别结果且session正在等待，标记为完成
+                            if task_type == 'offline' and session.get('waiting_for_offline'):
+                                session['offline_completed'] = True
+                                logger.debug(f"[离线识别完成] session={session_id}, 已通知等待线程")
+                except Exception as e:
+                    logger.error(f"发送结果失败: {session_id}, 错误: {e}")
+                    # 标记session为失败，但不在这里删除，让WebSocket handler的finally块处理
+                    session['send_failed'] = True
+        else:
+            await asyncio.sleep(0.01)  # 避免CPU空转
 
 async def process_audio_data(session_id: str, audio_data: bytes, session: dict):
     """处理音频数据，执行 VAD 检测和在线识别"""
-    # 1. 将音频帧加入历史缓冲（frames）
-    session['frames'].append(audio_data)
-    duration_ms = len(audio_data) // 32  # 假设 16kHz, 16bit, mono
-    session['vad_pre_idx'] += duration_ms
+    # 1. 将音频帧加入到离线识别缓冲
+    session['frames_offline'].append(audio_data)
     
-    # 2. 在线识别：累积音频帧
-    session['frames_asr_online'].append(audio_data)
-    session['status_dict_asr_online']['is_final'] = session['speech_end_i'] != -1
+    # 2. 执行vad识别
+    await asyncio.to_thread(
+        task_queue.put,
+        {
+            'session_id': session_id,
+            'audio_data': audio_data,
+            'type': 'vad',
+            'status_dict_vad': session['status_dict_vad'].copy()
+        }
+    )
     
-    # 更新 VAD chunk_size
-    if 'chunk_size' in session['status_dict_asr_online']:
-        session['status_dict_vad']['chunk_size'] = int(
-            session['status_dict_asr_online']['chunk_size'][1] * 60 / session['chunk_interval']
-        )
-    
-    # 当累积足够帧数或检测到语音结束时，进行在线识别
-    frames_count = len(session['frames_asr_online'])
+    # 3. 累积音频帧， 如果达到阈值，执行在线识别
+    session['frames_online'].append(audio_data)
+    frames_count = len(session['frames_online'])
     chunk_interval = session['chunk_interval']
-    is_final = session['status_dict_asr_online']['is_final']
-    
-    if (frames_count % chunk_interval == 0 or is_final):
-        logger.debug(f"[在线识别] session={session_id}, frames_count={frames_count}, is_final={is_final}")
-        audio_in = b"".join(session['frames_asr_online'])
+    #达到阈值
+    if (frames_count % chunk_interval == 0):
+        logger.debug(f"[在线识别] session={session_id}, frames_count={frames_count}")
+        audio_in = b"".join(session['frames_online'])
         await asyncio.to_thread(
             task_queue.put,
             {
@@ -290,25 +296,8 @@ async def process_audio_data(session_id: str, audio_data: bytes, session: dict):
         )
         session['first_pass_count'] += 1
         session_manager.stats['total_requests'] += 1
-        session['frames_asr_online'] = []
-    
-    # 3. 如果已检测到语音开始，将当前帧加入离线识别缓冲（frames_asr）
-    if session['speech_start']:
-        session['frames_asr'].append(audio_data)
-    
-    # 4. 执行 VAD 检测（异步提交到队列，结果会在 result_handler 中处理）
-    await asyncio.to_thread(
-        task_queue.put,
-        {
-            'session_id': session_id,
-            'audio_data': audio_data,
-            'type': 'vad',
-            'status_dict_vad': session['status_dict_vad'].copy()
-        }
-    )
-    
-    # 注意：VAD 检测结果会在 result_handler 中异步处理
-    # 当检测到 speech_end 时，会在 result_handler 中直接触发离线识别
+        # 清理已处理的音频数据
+        session['frames_online'] = []
 
 async def handle_speech_end(session_id: str, session: dict):
     """处理语音结束，执行离线精细识别（2pass 的第二遍识别）"""
@@ -336,7 +325,7 @@ async def handle_speech_end(session_id: str, session: dict):
     # 重置状态，准备下一轮识别
     session['frames_asr'] = []
     session['speech_start'] = False
-    session['frames_asr_online'] = []
+    session['frames_online'] = []
     session['status_dict_asr_online']['cache'] = {}
     
     # 根据结束原因选择清理策略
@@ -439,7 +428,6 @@ async def websocket_asr(websocket: WebSocket):
             # 解码base64音频数据
             try:
                 audio_data = base64.b64decode(audio_b64)
-                
             except Exception as e:
                 logger.error(f"音频数据base64解码失败: {session_id}, 错误: {e}")
                 continue
@@ -464,6 +452,10 @@ async def websocket_asr(websocket: WebSocket):
                 # 首帧：重置状态，开始新的识别
                 logger.info(f"[首帧] session={session_id}, 重置识别状态")
                 session['speech_end_i'] = -1
+                await process_audio_data(session_id, audio_data, session)
+            elif status == 1:
+                # 中间帧
+                await process_audio_data(session_id, audio_data, session)
             elif status == 2:
                 # 尾帧：先处理最后一帧音频，然后触发离线识别
                 logger.debug(f"[尾帧] session={session_id}, 处理最后一帧并触发离线识别, frames_asr_len={len(session['frames_asr'])}")
@@ -499,12 +491,7 @@ async def websocket_asr(websocket: WebSocket):
                     logger.debug(f"[尾帧] 没有音频数据，跳过离线识别: {session_id}")
                 
                 session['is_final'] = True
-                break
-            
-            # 处理音频数据（非尾帧的情况）
-            if status != 2:
-                await process_audio_data(session_id, audio_data, session)
-                    
+                break        
     except WebSocketDisconnect:
         logger.info(f"客户端断开连接: {session_id}")
     except RuntimeError as e:

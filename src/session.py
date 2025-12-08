@@ -32,21 +32,20 @@ class SessionManager:
             'second_pass_count': 0,
             'audio_buffer': b'',
             # 音频帧缓冲
-            'frames': [],
-            'frames_asr': [],
-            'frames_asr_online': [],
+            'frames_offline': [],
+            'frames_online': [],
             # VAD 相关状态
             'vad_pre_idx': 0,
-            'speech_start': False,
+            'speech_start': True,
             'speech_end_i': -1,
             # 模型状态字典
             'status_dict_asr': {},
-            'status_dict_asr_online': {"cache": {}, "is_final": False},
-            'status_dict_vad': {"cache": {}, "is_final": False},
+            'status_dict_asr_online': {"cache": {}, "is_final": False, "chunk_size": [5, 10, 5]},
+            'status_dict_vad': {"cache": {}, "is_final": False, "chunk_size": 60},  # 10 * 60 / 10 = 60
             'status_dict_punc': {"cache": {}},
             # 配置参数
             'chunk_interval': 10,
-            'chunk_size': [5, 10, 5],
+            'chunk_size': [5, 10, 5], # [前缀帧数，步长，后缀帧数]
             'wav_name': 'microphone',
             # 时间戳相关（用于响应消息）
             'start_time_ms': current_time_ms,  # 会话开始时间（毫秒）
