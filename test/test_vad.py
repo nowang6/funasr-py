@@ -5,7 +5,7 @@ model = AutoModel(model="fsmn-vad", model_revision="v2.0.4")
 
 import soundfile
 
-wav_file = f"data/张三丰.wav"
+wav_file = f"data/创建警单.wav"
 speech, sample_rate = soundfile.read(wav_file)
 chunk_stride = int(chunk_size * sample_rate / 1000)
 

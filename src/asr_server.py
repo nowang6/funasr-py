@@ -69,23 +69,17 @@ offline_model = AutoModel(model=ASR_MODEL_PATH,
 
 
 def vad_infer(audio_in):
-    res = VAD_MODEL.generate(input=audio_in, cache={}, is_final=False, chunk_size=VAD_CHUNK_SIZE)
+    res = VAD_MODEL.generate(input=audio_in, cache={}, is_final=True, chunk_size=VAD_CHUNK_SIZE)
     value = res[0]["value"]
     return len(value) == 0
 
 
 def asr_online_infer(audio_in):
-    res = asr_model_online.generate(input=audio_in, cache={}, is_final=False, chunk_size=VAD_CHUNK_SIZE)
+    res = asr_model_online.generate(input=audio_in, cache={}, is_final=True, chunk_size=chunk_size, encoder_chunk_look_back=encoder_chunk_look_back, decoder_chunk_look_back=decoder_chunk_look_back)
     return res[0]["text"]
 
-def asr_offline_infer(audio_in):
-
-    res = offline_model.generate(input=f"{model.model_path}/example/asr_example.wav", 
-                     batch_size_s=300, 
-                     hotword='魔搭')
-    res = PUNC_MODEL.generate(input=res)
-    return res[0]["text"]
-
+def asr_offline_infer(audio_in, is_final):
+    return None
 
 # 全局变量
 NUM_WORKERS = 1
@@ -233,15 +227,18 @@ async def websocket_asr(websocket: WebSocket):
             ## 连续2次静音，或者尾帧，触发离线识别
             offline_accumulate_frame = b"".join(session["frames"][offline_start_frame_id+1:])
             res = asr_offline_infer(offline_accumulate_frame)
+            
             #离线识别完成，重置someone_speak标志, 离线开始frames id
             offline_start_frame_id = frames_count
             has_spoken_before = False
+            
             # 离线识别完成，跳过在线识别
             continue
         if frames_count % 4 == 0:
             ## 每4帧执行一次在线识别
             online_accumulate_frame = b"".join(session["frames"][online_start_frame_id+1:])
             res = asr_online_infer(online_accumulate_frame)
+            # 移动在线识别的开始frame_id
             online_start_frame_id = frames_count
     
 if __name__ == "__main__":
