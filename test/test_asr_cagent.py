@@ -26,7 +26,7 @@ WS_URL = "wss://182.150.59.81:31843/ai/agent/v1/ast"  # WebSocket服务地址
 token = os.getenv("TOKEN")  # 从环境变量读取认证令牌
 if not token:
     raise ValueError("TOKEN 未设置，请在 .env 文件中配置 TOKEN")
-AUDIO_PATH = "data/120报警电话16k.wav"  # 音频文件路径
+AUDIO_PATH = "data/近远场测试.wav"  # 音频文件路径
 FRAME_SIZE = 4096  # 音频帧大小（字节）
 # 时长(秒) = FRAME_SIZE / (采样率 × 位深度/8)
 # 时长(秒) = 4096 / (16000 × 16/8)
