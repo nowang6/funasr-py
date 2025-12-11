@@ -23,36 +23,36 @@ from funasr import AutoModel
 
 
 VAD_MODEL_PATH="models/speech_fsmn_vad_zh-cn-16k-common-pytorch"
-VAD_CHUNK_SIZE = 256
+VAD_CHUNK_SIZE = 480
 CLIENT_CHUNK_SIZE = 128
 VAD_CHECK_FREQ = VAD_CHUNK_SIZE // CLIENT_CHUNK_SIZE
 
 
 
-ASR_MODEL_PATH="models/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
-asr_model = AutoModel(
-    model=ASR_MODEL_PATH,
-    disable_pbar=True,
-    disable_log=True,
-    disable_update=True,
-)
+# ASR_MODEL_PATH="models/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
+# asr_model = AutoModel(
+#     model=ASR_MODEL_PATH,
+#     disable_pbar=True,
+#     disable_log=True,
+#     disable_update=True,
+# )
 
-ASR_MODEL_ONLINE_PATH="models/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online"
-asr_model_online = AutoModel(
-    model=ASR_MODEL_ONLINE_PATH,
-    disable_pbar=True,
-    disable_log=True,
-    disable_update=True,
-)
+# ASR_MODEL_ONLINE_PATH="models/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online"
+# asr_model_online = AutoModel(
+#     model=ASR_MODEL_ONLINE_PATH,
+#     disable_pbar=True,
+#     disable_log=True,
+#     disable_update=True,
+# )
 
-PUNC_MODEL_PATH="models/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727"
+# PUNC_MODEL_PATH="models/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727"
 
-PUNC_MODEL = AutoModel(
-        model=PUNC_MODEL_PATH,
-        disable_pbar=True,
-        disable_log=True,
-        disable_update=True
-        )
+# PUNC_MODEL = AutoModel(
+#         model=PUNC_MODEL_PATH,
+#         disable_pbar=True,
+#         disable_log=True,
+#         disable_update=True
+#         )
 
 VAD_MODEL = AutoModel(
     model=VAD_MODEL_PATH,
@@ -62,10 +62,10 @@ VAD_MODEL = AutoModel(
     )
 
 
-offline_model = AutoModel(model=ASR_MODEL_PATH, 
-                          vad_model=VAD_MODEL_PATH, 
-                          punc_model=PUNC_MODEL_PATH)
-                          # spk_model="cam++", spk_model_revision="v2.0.2"
+# offline_model = AutoModel(model=ASR_MODEL_PATH, 
+#                           vad_model=VAD_MODEL_PATH, 
+#                           punc_model=PUNC_MODEL_PATH)
+#                           # spk_model="cam++", spk_model_revision="v2.0.2"
 
 
 def vad_infer(audio_in):
@@ -75,8 +75,9 @@ def vad_infer(audio_in):
 
 
 def asr_online_infer(audio_in):
-    res = asr_model_online.generate(input=audio_in, cache={}, is_final=True, chunk_size=chunk_size, encoder_chunk_look_back=encoder_chunk_look_back, decoder_chunk_look_back=decoder_chunk_look_back)
-    return res[0]["text"]
+    # res = asr_model_online.generate(input=audio_in, cache={}, is_final=True, chunk_size=chunk_size, encoder_chunk_look_back=encoder_chunk_look_back, decoder_chunk_look_back=decoder_chunk_look_back)
+    # return res[0]["text"]
+    return None
 
 def asr_offline_infer(audio_in, is_final):
     return None
@@ -140,6 +141,7 @@ async def websocket_asr(websocket: WebSocket):
     has_spoken_before = False
     offline_start_frame_id = 0
     online_start_frame_id = 0
+    vad_start_frame_id=0
     
     while True:
         # 接收客户端数据
@@ -200,11 +202,12 @@ async def websocket_asr(websocket: WebSocket):
         
         if status == 0:
              # 首帧：重置状态，开始新的识别
-             session["frames"] = []
+             session["frames"] = bytearray()
              
-        session["frames"].append(audio_frame)
+        session["frames"].extend(audio_frame)
         
         frames_count = len(session["frames"])
+        print(f"frames_count: {frames_count}")
         
         if frames_count % VAD_CHECK_FREQ == 0:
             ## 每VAD_CHECK_FREQ帧执行一次VAD识别
