@@ -22,7 +22,8 @@ class SessionManager:
         current_time_ms = int(current_time * 1000)
         self.sessions[session_id] = {
             'websocket': websocket,
-            'frame_id': 0
+            'frames': bytearray(),
+            'frames_count': 0,
             'created_at': current_time,
             'last_activity': current_time,  # 最后活动时间
             'send_failed': False,  # 标记发送是否失败

@@ -4,6 +4,7 @@ import base64
 import json
 import uuid
 import os
+import wave
 from time import time
 from datetime import datetime
 
@@ -14,7 +15,8 @@ os.environ.pop('HTTP_PROXY', None)
 os.environ.pop('HTTPS_PROXY', None)
 
 
-WS_URL = "ws://localhost:8000/v1/asr"
+WS_URL = "ws://localhost:8000/tuling/ast/v3"
+# WS_URL = "ws://125.64.42.236:11924/tuling/ast/v3"
 AUDIO_PATH = "data/近远场测试.wav" # 音频文件路径
 FRAME_SIZE = 4096
 INTERVAL = 0.04
@@ -32,14 +34,27 @@ async def send_audio(ws, audio_path):
     app_id = "123456"
     status = 0
 
-    with open(audio_path, "rb") as f:
-        while True:
-            data = f.read(FRAME_SIZE)
-            if not data:
-                break
+    # 使用 wave 模块读取 WAV 文件，只读取音频数据（跳过文件头）
+    with wave.open(audio_path, "rb") as wav_file:
+        # 获取音频参数（可选，用于调试）
+        params = wav_file.getparams()
+        sample_rate = wav_file.getframerate()
+        print(f"音频参数: 采样率={sample_rate}Hz, 声道数={params.nchannels}, "
+              f"位深度={params.sampwidth*8}bit, 总帧数={wav_file.getnframes()}")
+        
+        # 读取所有音频帧数据（不包含 WAV 文件头）
+        audio_data = wav_file.readframes(wav_file.getnframes())
+        
+        # 按 FRAME_SIZE 字节分块发送
+        offset = 0
+        while offset < len(audio_data):
+            # 计算本次读取的数据块大小
+            chunk_size = min(FRAME_SIZE, len(audio_data) - offset)
+            data = audio_data[offset:offset + chunk_size]
+            offset += chunk_size
             
             # 如果读取的数据小于请求的大小，说明这是最后一块数据
-            is_last_chunk = len(data) < FRAME_SIZE
+            is_last_chunk = chunk_size < FRAME_SIZE or offset >= len(audio_data)
 
             if is_last_chunk:
                 status = 2  # 设置为结束状态

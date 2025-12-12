@@ -15,6 +15,52 @@ from funasr import AutoModel
 from src.logger import logger
 
 
+
+
+
+
+
+# ASR_MODEL_PATH="models/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
+# asr_model = AutoModel(
+#     model=ASR_MODEL_PATH,
+#     disable_pbar=True,
+#     disable_log=True,
+#     disable_update=True,
+# )
+
+# ASR_MODEL_ONLINE_PATH="models/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online"
+# asr_model_online = AutoModel(
+#     model=ASR_MODEL_ONLINE_PATH,
+#     disable_pbar=True,
+#     disable_log=True,
+#     disable_update=True,
+# )
+
+# PUNC_MODEL_PATH="models/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727"
+
+# PUNC_MODEL = AutoModel(
+#         model=PUNC_MODEL_PATH,
+#         disable_pbar=True,
+#         disable_log=True,
+#         disable_update=True
+#         )
+
+
+
+# offline_model = AutoModel(model=ASR_MODEL_PATH, 
+#                           vad_model=VAD_MODEL_PATH, 
+#                           punc_model=PUNC_MODEL_PATH)
+#                           # spk_model="cam++", spk_model_revision="v2.0.2"
+
+
+def asr_online_infer(audio_in):
+    # res = asr_model_online.generate(input=audio_in, cache={}, is_final=True, chunk_size=chunk_size, encoder_chunk_look_back=encoder_chunk_look_back, decoder_chunk_look_back=decoder_chunk_look_back)
+    # return res[0]["text"]
+    return None
+
+def asr_offline_infer(audio_in, is_final):
+    return None
+
 # ==================== 模型加载和推理进程 ====================
 class ASRWorker:
     """ASR 推理工作进程"""
