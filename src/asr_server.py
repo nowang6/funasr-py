@@ -18,25 +18,62 @@ import uvicorn
 
 from src.asr_worker import ASRWorker
 from src.vad_worker import VADWorker
+from src.asr_worker import AsrWorker
 
 from src.asr_session import SessionManager
 import base64
-from src.const import VAD_CHUNK_SIZE, VAD_PROCESS_NUM, NUM_WORKERS, AUDIO_CHUNK_SIZE
+from src.const import VAD_CHUNK_SIZE, VAD_PROCESS_NUM, NUM_WORKERS, AUDIO_CHUNK_SIZE, ASR_PROCESS_NUM
 from src.logger import logger
-from src.async_tasks import audio_handler, cleanup_tasks, vad_result_dispatcher, result_handler, vad_check
+from src.async_tasks import audio_handler, cleanup_tasks, vad_result_dispatcher, result_handler, vad_check, online_infer, asr_result_dispatcher, offline_infer
 
 
 # 全局变量
+
+#vad相关
 vad_task_queue = None
 vad_result_queue = None
+vad_result_dict = None
+
+#asr识别相关
+asr_task_queue = None
+asr_result_queue = None
+asr_result_dict = None
+
 task_queue = None
 result_queue = None
 session_manager = None
 workers = []
-stats_lock = None
-vad_executor = None  # VAD进程池执行器
-vad_result_dict = None  # 用于存储VAD结果，key为task_id，value为结果
+vad_executor = None
 
+# 初始化全局变量
+def init_globals():
+    
+    global session_manager
+    
+    # 创建队列
+    global task_queue, result_queue
+    task_queue = Queue(maxsize=5000)
+    result_queue = Queue(maxsize=5000)
+    
+    # 创建会话管理器
+    manager = Manager()
+    stats_lock = manager.Lock()
+    session_manager = SessionManager()
+    
+    
+    # 创建VAD任务队列和结果队列
+    global vad_task_queue, vad_result_queue, vad_result_dict
+    vad_task_queue = Queue(maxsize=5000)
+    vad_result_queue = Queue(maxsize=5000)
+    vad_result_dict = Manager().dict()  # 用于存储VAD结果，key为task_id，value为结果
+    
+    # Online识别相关
+    global asr_task_queue, asr_result_queue, asr_result_dict
+    asr_task_queue = Queue(maxsize=5000)
+    asr_result_queue = Queue(maxsize=5000)
+    asr_result_dict = manager.dict()  # 用于存储在线识别结果，key为task_id，value为结果
+
+ 
 
 
 def worker_process(worker_id: int, task_queue: Queue, result_queue: Queue):
@@ -48,29 +85,18 @@ def vad_worker_process(worker_id: int, task_queue: Queue, result_queue: Queue):
     worker = VADWorker(worker_id, task_queue, result_queue)
     worker.run()
 
+def asr_worker_process(worker_id: int, task_queue: Queue, result_queue: Queue):
+    worker = AsrWorker(worker_id, task_queue, result_queue)
+    worker.run()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    # 启动时初始化
-    global vad_task_queue, vad_result_queue, task_queue, result_queue, session_manager, workers, stats_lock, vad_executor, vad_result_dict, vad_result_lock
+    global workers
     
     logger.info("=" * 50)
     logger.info("启动实时语音转写服务")
     logger.info(f"工作进程数量: {NUM_WORKERS}")
-    
-    # 创建队列
-    vad_task_queue = Queue(maxsize=5000)
-    vad_result_queue = Queue(maxsize=5000)
-    task_queue = Queue(maxsize=5000)
-    result_queue = Queue(maxsize=5000)
-    
-    # 创建会话管理器
-    manager = Manager()
-    stats_lock = manager.Lock()
-    vad_result_dict = manager.dict()  # 用于存储VAD结果
-    vad_result_lock = manager.Lock()  # 保护结果字典的锁
-    session_manager = SessionManager()
-    
     
     # 启动VAD进程
     for i in range(VAD_PROCESS_NUM):
@@ -78,6 +104,13 @@ async def lifespan(app: FastAPI):
         p.start()
         workers.append(p)
         logger.info(f"启动 VAD process {i}")
+    
+    # 启动在线识别进程
+    for i in range(ASR_PROCESS_NUM):
+        p = Process(target=asr_worker_process, args=(i, asr_task_queue, asr_result_queue))
+        p.start()
+        workers.append(p)
+        logger.info(f"启动 Online process {i}")
     
     # 启动工作进程
     for i in range(NUM_WORKERS):
@@ -92,8 +125,12 @@ async def lifespan(app: FastAPI):
     # 启动VAD结果分发任务
     asyncio.create_task(vad_result_dispatcher(vad_result_queue, vad_result_dict))
     
+    # 启动在线识别结果分发任务
+    asyncio.create_task(asr_result_dispatcher(asr_result_queue, asr_result_dict))
+    
     # 启动清理任务
-    asyncio.create_task(cleanup_tasks(session_manager, vad_result_dict))
+    all_result_dict = (vad_result_dict, asr_result_dict)
+    asyncio.create_task(cleanup_tasks(session_manager, all_result_dict))
     
     # 启动统计日志任务
     asyncio.create_task(audio_handler())
@@ -208,10 +245,13 @@ async def websocket_asr(websocket: WebSocket):
         if (frames_count - vad_start_frame_id) >= VAD_CHUNK_SIZE:
             vad_end_frame_id = vad_start_frame_id + VAD_CHUNK_SIZE
             vad_accumulate_frame = frames[vad_start_frame_id:vad_end_frame_id]
-            logger.info(f"vad识别帧数: {len(vad_accumulate_frame)}")
+            # logger.info(f"vad识别帧数: {len(vad_accumulate_frame)}")
             vad_audio_data = bytes(vad_accumulate_frame)
+            start_time = time.time()
             silence = await vad_check(vad_task_queue, vad_audio_data, vad_result_dict)
-            logger.info(f"vad识别结果: {silence}")
+            elapsed_time = (time.time() - start_time) * 1000
+            # logger.info(f"vad_check耗时: {elapsed_time:.2f}毫秒")
+            # logger.info(f"vad识别结果: {silence}")
             # 识别完成，更新起始标记
             vad_start_frame_id = vad_end_frame_id
             if silence:
@@ -221,6 +261,7 @@ async def websocket_asr(websocket: WebSocket):
                     offline_end_frame_id = vad_end_frame_id
                     offline_audio_data = bytes(frames[offline_start_frame_id:offline_end_frame_id])
                     # 识别完成后，更新起始标记
+                    res = await offline_infer(asr_task_queue, offline_audio_data, asr_result_dict)
                     offline_start_frame_id = offline_end_frame_id
                 if not has_spoken_before:
                     # 前序没有人说话，跳过识别
@@ -229,14 +270,26 @@ async def websocket_asr(websocket: WebSocket):
                 has_spoken_before = True
                 continue_slience_count = 0
         #是否触发在线识别
-        if (frames_count -  online_start_frame_id) >= AUDIO_CHUNK_SIZE: 
-            None       
+        if (frames_count -  online_start_frame_id) >= AUDIO_CHUNK_SIZE:
+            online_end_frame_id = online_start_frame_id + AUDIO_CHUNK_SIZE
+            online_accumulate_frame = frames[online_start_frame_id:online_end_frame_id]
+            logger.info(f"online识别帧数: {len(online_accumulate_frame)}")
+            online_audio_data = bytes(online_accumulate_frame)
+            start_time = time.time()
+            res = await online_infer(asr_task_queue, online_audio_data, asr_result_dict)
+            elapsed_time = (time.time() - start_time) * 1000
+            logger.info(f"online_infer耗时: {elapsed_time:.2f}毫秒")
+            logger.info(f"online识别结果: {res}")
+            # 识别完成，更新起始标记
+            online_start_frame_id = online_end_frame_id
             
             
             
      
     
 if __name__ == "__main__":
+    # 初始化全局变量
+    init_globals()
     
     uvicorn.run(
         app,
